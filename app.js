@@ -27,6 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
             printStyleTag.textContent = `
                 @media print {
                     @page { size: A4 portrait; margin: 0; }
+                    html, body, .app-container, .preview-pane { width: 210mm !important; }
+                    .a4-sheet { width: 210mm !important; height: 297mm !important; margin: 0 !important; }
                 }
             `;
         } else {
@@ -34,6 +36,8 @@ document.addEventListener('DOMContentLoaded', () => {
             printStyleTag.textContent = `
                 @media print {
                     @page { size: A4 landscape; margin: 0; }
+                    html, body, .app-container, .preview-pane { width: 297mm !important; }
+                    .a4-sheet { width: 297mm !important; height: 210mm !important; margin: 0 !important; }
                 }
             `;
         }
@@ -234,6 +238,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!rawMd) return '';
         let md = rawMd;
 
+        // 0. Extract Code Blocks to prevent them from being processed
+        const codeBlocks = [];
+        md = md.replace(/(```[\s\S]*?```|`[^`\n]+`)/g, (match) => {
+            const id = `__CODE_BLOCK_${codeBlocks.length}__`;
+            codeBlocks.push(match);
+            return id;
+        });
+
         // 1. Convert KaTeX Math Blocks $$ ... $$
         md = md.replace(/\$\$([\s\S]+?)\$\$/g, (match, mathContent) => {
             if (window.katex) {
@@ -305,6 +317,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const regex = new RegExp(`\\b${abbr}\\b`, 'g');
             md = md.replace(regex, `<abbr title="${title}">${abbr}</abbr>`);
         }
+
+        // Restore Code Blocks
+        md = md.replace(/__CODE_BLOCK_(\d+)__/g, (match, index) => {
+            return codeBlocks[parseInt(index, 10)];
+        });
 
         return md;
     }
@@ -463,7 +480,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const testHeight = measurePageNodesHeight(testNodes, tempMeasurer);
             
             // Check if adding this node exceeds available page height
-            if (testHeight > availableHeight - 3 && currentPageNodes.length > 0) {
+            if (testHeight > availableHeight - 3) {
                 let splitResult = null;
                 if (node.tagName === 'P') {
                     splitResult = splitParagraphNode(node, currentPageNodes, availableHeight, tempMeasurer);
@@ -476,8 +493,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (splitResult && splitResult.head && splitResult.tail) {
                     currentPageNodes.push(splitResult.head);
                     startNewPage();
-                    node = splitResult.tail;
+                    // Process the tail again in case it also exceeds the available height
+                    nodes[i] = splitResult.tail;
+                    i--; 
+                    continue;
                 } else {
+                    // Cannot split the node.
+                    if (currentPageNodes.length === 0) {
+                        // The node itself is larger than a whole page, and cannot be split.
+                        // Just push it to its own page and move on.
+                        currentPageNodes.push(node);
+                        startNewPage();
+                        continue;
+                    }
+
                     const preventOrphans = neatLayoutToggle ? neatLayoutToggle.checked : true;
                     const trailingHeadings = [];
                     
@@ -498,6 +527,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             currentPageNodes.push(trailingHeadings.shift());
                         }
                         startNewPage();
+                        // Re-evaluate current node on the new page
+                        nodes[i] = node;
+                        i--;
+                        continue;
                     } else if (trailingHeadings.length > 0) {
                         startNewPage();
                         trailingHeadings.forEach(hNode => {
@@ -505,8 +538,16 @@ document.addEventListener('DOMContentLoaded', () => {
                                 currentPageNodes.push(hNode);
                             }
                         });
+                        // Re-evaluate current node on the new page
+                        nodes[i] = node;
+                        i--;
+                        continue;
                     } else {
                         startNewPage();
+                        // Re-evaluate current node on the new page
+                        nodes[i] = node;
+                        i--;
+                        continue;
                     }
                 }
             }
