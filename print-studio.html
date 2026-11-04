@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>PrintStudio — Print Layout Studio</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        mono: ['JetBrains Mono', 'monospace']
+      }
+    }
+  }
+};
+</script>
+
+<style>
+  * { -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overscroll-behavior: none; }
+  body { font-family: 'Inter', system-ui, sans-serif; }
+
+  .workspace-bg {
+    background-color: #f1f5f9;
+    background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+  #studioCanvas {
+    display: block;
+    touch-action: none;
+    box-shadow: 0 12px 32px -14px rgba(15, 23, 42, .35), 0 0 0 1px rgba(15, 23, 42, .08);
+  }
+  select {
+    background-repeat: no-repeat;
+    background-position: right 4px center;
+    background-size: 11px;
+  }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinning { animation: spin .8s linear infinite; }
+</style>
+</head>
+
+<body class="h-screen bg-slate-50 text-slate-900 flex flex-col overflow-hidden" style="height:100dvh">
+
+<!-- SINGLE NAV BAR -->
+<header class="relative z-30 h-14 shrink-0 bg-white border-b border-slate-200 flex items-center gap-1.5 sm:gap-2 px-2 sm:px-4">
+
+  <!-- Brand -->
+  <div class="flex items-center gap-2 shrink-0">
+    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 grid place-items-center shadow-sm shadow-indigo-500/30">
+      <i data-lucide="layout-template" class="w-4 h-4 text-white"></i>
+    </div>
+    <span class="hidden sm:block font-semibold text-[13px] tracking-tight text-slate-800">PrintStudio</span>
+  </div>
+
+  <div class="w-px h-6 bg-slate-200 hidden sm:block"></div>
+
+  <!-- Canvas size -->
+  <select id="sizeSelect" title="Canvas size"
+    class="bg-slate-100 hover:bg-slate-200/70 text-[11px] sm:text-xs font-medium text-slate-700 rounded-lg pl-2 pr-5 py-1.5 border border-transparent focus:outline-none focus:border-indigo-400 focus:bg-white cursor-pointer max-w-[92px] sm:max-w-none">
+    <option value="a4-portrait" selected>A4 Portrait</option>
+    <option value="a4-landscape">A4 Landscape</option>
+    <option value="3:4">3:4</option>
+    <option value="4:3">4:3</option>
+    <option value="16:9">16:9</option>
+    <option value="9:16">9:16</option>
+    <option value="1:1">1:1</option>
+  </select>
+
+  <!-- DPI (Eco / Low / Medium / High) -->
+  <select id="dpiSelect" title="Resolution"
+    class="bg-slate-100 hover:bg-slate-200/70 text-[11px] sm:text-xs font-medium text-slate-700 rounded-lg pl-2 pr-5 py-1.5 border border-transparent focus:outline-none focus:border-indigo-400 focus:bg-white cursor-pointer max-w-[132px] sm:max-w-none">
+    <option value="72">Eco — 72 DPI</option>
+    <option value="150">Low — 150 DPI</option>
+    <option value="300" selected>Medium — 300 DPI</option>
+    <option value="600">High — 600 DPI</option>
+  </select>
+
+  <span id="dimensionReadout" class="hidden xl:inline font-mono text-[11px] text-slate-400 ml-1"></span>
+
+  <div class="flex-1"></div>
+
+  <!-- Import -->
+  <button id="importBtn"
+    class="h-9 px-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm shadow-indigo-600/25 transition shrink-0">
+    <i data-lucide="image-plus" class="w-4 h-4"></i>
+    <span class="hidden sm:inline">Import</span>
+  </button>
+
+  <!-- Sample pack (on demand) -->
+  <button id="sampleBtn" title="Load sample images"
+    class="h-9 px-2.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 active:bg-slate-100 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition shrink-0 disabled:opacity-60">
+    <i data-lucide="sparkles" class="w-4 h-4 text-violet-500"></i>
+    <span class="hidden sm:inline">Sample</span>
+  </button>
+
+  <!-- Grid toggle + Grid size dropdown (2x2, 4x4) -->
+  <div class="flex items-center rounded-lg border border-slate-200 bg-white p-0.5 shrink-0" id="gridGroup">
+    <button id="gridBtn" title="Toggle grid"
+      class="h-8 w-8 rounded-md text-slate-600 hover:bg-slate-100 grid place-items-center transition">
+      <i data-lucide="grid" class="w-4 h-4"></i>
+    </button>
+    <select id="gridSelect" title="Grid divisions"
+      class="bg-transparent text-[11px] font-medium text-slate-700 pl-1 pr-3 py-1 focus:outline-none cursor-pointer">
+      <option value="2" selected>2×2</option>
+      <option value="4">4×4</option>
+    </select>
+  </div>
+
+  <!-- Export -->
+  <div class="relative shrink-0" id="exportWrap">
+    <button id="exportBtn"
+      class="h-9 px-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 active:bg-black text-white text-xs font-semibold flex items-center gap-1.5 transition">
+      <i data-lucide="download" class="w-4 h-4"></i>
+      <span class="hidden sm:inline">Export</span>
+    </button>
+
+    <div id="exportMenu"
+      class="hidden absolute right-0 top-[calc(100%+8px)] w-60 bg-white border border-slate-200 rounded-xl shadow-xl shadow-slate-900/10 p-2 z-50">
+      <div class="px-2 py-1.5 border-b border-slate-100 mb-1">
+        <p class="text-[11px] font-semibold text-slate-800">Export</p>
+        <p id="exportDims" class="text-[10px] font-mono text-indigo-600 mt-0.5">—</p>
+      </div>
+      <button id="exportPdf" class="w-full text-left px-2 py-2 rounded-lg hover:bg-slate-100 active:bg-slate-200 flex items-center gap-2 text-xs font-medium text-slate-700 transition">
+        <i data-lucide="file-text" class="w-4 h-4 text-indigo-500"></i> Printable PDF
+      </button>
+      <button id="exportPng" class="w-full text-left px-2 py-2 rounded-lg hover:bg-slate-100 active:bg-slate-200 flex items-center gap-2 text-xs font-medium text-slate-700 transition">
+        <i data-lucide="image" class="w-4 h-4 text-sky-500"></i> Lossless PNG
+      </button>
+      <button id="exportJpg" class="w-full text-left px-2 py-2 rounded-lg hover:bg-slate-100 active:bg-slate-200 flex items-center gap-2 text-xs font-medium text-slate-700 transition">
+        <i data-lucide="file-image" class="w-4 h-4 text-amber-500"></i> High-quality JPEG
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- WORKSPACE -->
+<main id="viewport" class="flex-1 relative overflow-hidden workspace-bg flex items-center justify-center">
+
+  <canvas id="studioCanvas"></canvas>
+
+  <!-- Drop overlay -->
+  <div id="dropOverlay"
+    class="pointer-events-none opacity-0 transition-opacity duration-200 absolute inset-3 rounded-2xl border-2 border-dashed border-indigo-400 bg-indigo-50/80 backdrop-blur-sm z-40 flex flex-col items-center justify-center">
+    <i data-lucide="upload-cloud" class="w-8 h-8 text-indigo-500 mb-2"></i>
+    <p class="text-sm font-semibold text-indigo-700">Drop images to place</p>
+  </div>
+
+  <!-- Contextual selection bar -->
+  <div id="selectionBar"
+    class="hidden absolute left-1/2 -translate-x-1/2 bottom-3 z-20 flex items-center gap-0.5 bg-white/95 backdrop-blur border border-slate-200 shadow-lg shadow-slate-900/10 rounded-full p-1">
+    <span id="selDims" class="font-mono text-[11px] text-slate-600 px-2 tabular-nums">0 × 0</span>
+    <div class="w-px h-4 bg-slate-200"></div>
+    <button id="btnForward" title="Bring forward" class="w-8 h-8 rounded-full grid place-items-center text-slate-500 hover:bg-slate-100 active:bg-slate-200 transition">
+      <i data-lucide="bring-to-front" class="w-4 h-4"></i>
+    </button>
+    <button id="btnBackward" title="Send backward" class="w-8 h-8 rounded-full grid place-items-center text-slate-500 hover:bg-slate-100 active:bg-slate-200 transition">
+      <i data-lucide="send-to-back" class="w-4 h-4"></i>
+    </button>
+    <button id="btnDelete" title="Delete" class="w-8 h-8 rounded-full grid place-items-center text-rose-500 hover:bg-rose-50 active:bg-rose-100 transition">
+      <i data-lucide="trash-2" class="w-4 h-4"></i>
+    </button>
+  </div>
+</main>
+
+<!-- Toast -->
+<div id="toast"
+  class="fixed top-[68px] left-1/2 -translate-x-1/2 -translate-y-3 opacity-0 pointer-events-none transition-all duration-300 bg-slate-900 text-white text-xs font-medium px-3.5 py-2 rounded-lg shadow-xl z-50 flex items-center gap-2">
+  <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-400 shrink-0"></i>
+  <span id="toastMsg"></span>
+</div>
+
+<input type="file" id="fileInput" accept="image/*" multiple class="hidden">
+
+<script>
+lucide.createIcons();
+
+/* 1. PRESETS */
+const PRESETS = {
+  'a4-portrait':  { name: 'A4 Portrait',  wIn: 210 / 25.4, hIn: 297 / 25.4, pdf: { unit: 'mm', format: [210, 297], orientation: 'portrait' } },
+  'a4-landscape': { name: 'A4 Landscape', wIn: 297 / 25.4, hIn: 210 / 25.4, pdf: { unit: 'mm', format: [297, 210], orientation: 'landscape' } },
+  '3:4':  { name: '3:4',  wIn: 9,  hIn: 12, pdf: { unit: 'in', format: [9, 12],   orientation: 'portrait' } },
+  '4:3':  { name: '4:3',  wIn: 12, hIn: 9,  pdf: { unit: 'in', format: [12, 9],   orientation: 'landscape' } },
+  '16:9': { name: '16:9', wIn: 16, hIn: 9,  pdf: { unit: 'in', format: [16, 9],   orientation: 'landscape' } },
+  '9:16': { name: '9:16', wIn: 9,  hIn: 16, pdf: { unit: 'in', format: [9, 16],   orientation: 'portrait' } },
+  '1:1':  { name: '1:1',  wIn: 10, hIn: 10, pdf: { unit: 'in', format: [10, 10],  orientation: 'portrait' } }
+};
+
+/* 2. STATE */
+const state = {
+  presetKey: 'a4-portrait',
+  dpi: 300,
+  exportWidth: 2480,
+  exportHeight: 3508,
+  displayWidth: 300,
+  displayHeight: 424,
+
+  gridEnabled: false,
+  gridDivisions: 2,
+
+  items: [],
+  selectedId: null,
+
+  mode: null,
+  startPointer: null,
+  startRect: null,
+  activeGuides: [],
+
+  sampleBusy: false
+};
+
+const MIN_SIZE = 24;
+
+/* 3. DOM */
+const viewport     = document.getElementById('viewport');
+const canvas       = document.getElementById('studioCanvas');
+const ctx          = canvas.getContext('2d');
+const sizeSelect   = document.getElementById('sizeSelect');
+const dpiSelect    = document.getElementById('dpiSelect');
+const dimReadout   = document.getElementById('dimensionReadout');
+const exportDims   = document.getElementById('exportDims');
+const fileInput    = document.getElementById('fileInput');
+const importBtn    = document.getElementById('importBtn');
+const sampleBtn    = document.getElementById('sampleBtn');
+const gridBtn      = document.getElementById('gridBtn');
+const gridSelect   = document.getElementById('gridSelect');
+const gridGroup    = document.getElementById('gridGroup');
+const exportBtn    = document.getElementById('exportBtn');
+const exportMenu   = document.getElementById('exportMenu');
+const exportWrap   = document.getElementById('exportWrap');
+const selectionBar = document.getElementById('selectionBar');
+const selDims      = document.getElementById('selDims');
+const dropOverlay  = document.getElementById('dropOverlay');
+
+/* 4. SIZING */
+function updateCanvasDimensions(rescale = true) {
+  const prevW = state.exportWidth;
+  const prevH = state.exportHeight;
+  const p = PRESETS[state.presetKey];
+
+  state.exportWidth  = Math.round(p.wIn * state.dpi);
+  state.exportHeight = Math.round(p.hIn * state.dpi);
+
+  if (rescale && prevW > 0 && prevH > 0 && state.items.length) {
+    const sx = state.exportWidth / prevW;
+    const sy = state.exportHeight / prevH;
+    const s  = Math.min(sx, sy);
+    state.items.forEach(it => {
+      const relCx = (it.x + it.width / 2) / prevW;
+      const relCy = (it.y + it.height / 2) / prevH;
+      it.width  *= s;
+      it.height *= s;
+      it.x = relCx * state.exportWidth - it.width / 2;
+      it.y = relCy * state.exportHeight - it.height / 2;
+    });
+  }
+
+  dimReadout.textContent = `${state.exportWidth} × ${state.exportHeight} px`;
+  exportDims.textContent = `${state.exportWidth} × ${state.exportHeight} px @ ${state.dpi} DPI`;
+
+  fitCanvas();
+  render();
+  updateSelectionBar();
+}
+
+function fitCanvas() {
+  const rect = viewport.getBoundingClientRect();
+  const pad  = 20;
+  const availW = Math.max(80, rect.width  - pad * 2);
+  const availH = Math.max(80, rect.height - pad * 2);
+
+  const aspect = state.exportWidth / state.exportHeight;
+  let w = availW;
+  let h = w / aspect;
+  if (h > availH) { h = availH; w = h * aspect; }
+
+  w = Math.max(40, Math.round(w));
+  h = Math.max(40, Math.round(h));
+
+  state.displayWidth  = w;
+  state.displayHeight = h;
+
+  const dpr = window.devicePixelRatio || 1;
+  canvas.style.width  = w + 'px';
+  canvas.style.height = h + 'px';
+  canvas.width  = Math.round(w * dpr);
+  canvas.height = Math.round(h * dpr);
+}
+
+const dispToExport = () => state.exportWidth / state.displayWidth;
+const expToDisp     = () => state.displayWidth / state.exportWidth;
+
+function getCoords(e) {
+  const r = canvas.getBoundingClientRect();
+  const dx = e.clientX - r.left;
+  const dy = e.clientY - r.top;
+  const k  = dispToExport();
+  return { dx, dy, x: dx * k, y: dy * k };
+}
+
+/* 5. RENDER */
+const GUIDE_COLORS = {
+  center:   '#f43f5e',
+  edge:     '#fb7185',
+  grid:     '#6366f1',
+  object:   '#0891b2',
+  diagonal: '#f59e0b'
+};
+
+function render() {
+  const dpr = window.devicePixelRatio || 1;
+  const W = state.displayWidth;
+  const H = state.displayHeight;
+  const s = expToDisp();
+
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  for (const it of state.items) {
+    ctx.drawImage(it.img, it.x * s, it.y * s, it.width * s, it.height * s);
+  }
+
+  if (state.gridEnabled) drawGrid(W, H);
+  if (state.activeGuides.length) drawGuides(s);
+
+  const sel = getSelected();
+  if (sel) drawSelection(sel, s);
+}
+
+function drawGrid(W, H) {
+  const n = state.gridDivisions;
+  ctx.save();
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 4]);
+  ctx.strokeStyle = 'rgba(99,102,241,0.55)';
+  for (let i = 1; i < n; i++) {
+    const x = Math.round((W / n) * i) + 0.5;
+    const y = Math.round((H / n) * i) + 0.5;
+    ctx.beginPath();
+    ctx.moveTo(x, 0); ctx.lineTo(x, H);
+    ctx.moveTo(0, y); ctx.lineTo(W, y);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawGuides(s) {
+  ctx.save();
+  ctx.lineWidth = 1.25;
+  for (const g of state.activeGuides) {
+    ctx.strokeStyle = GUIDE_COLORS[g.type] || '#6366f1';
+    ctx.setLineDash(g.type === 'center' || g.type === 'edge' ? [] : [4, 4]);
+    ctx.beginPath();
+    if (g.kind === 'v') {
+      ctx.moveTo(g.x * s, g.y1 * s);
+      ctx.lineTo(g.x * s, g.y2 * s);
+    } else if (g.kind === 'h') {
+      ctx.moveTo(g.x1 * s, g.y * s);
+      ctx.lineTo(g.x2 * s, g.y * s);
+    } else {
+      ctx.moveTo(g.x1 * s, g.y1 * s);
+      ctx.lineTo(g.x2 * s, g.y2 * s);
+    }
+    ctx.stroke();
+
+    if (g.hit) {
+      ctx.setLineDash([]);
+      ctx.fillStyle = GUIDE_COLORS[g.type] || '#6366f1';
+      ctx.beginPath();
+      ctx.arc(g.hit[0] * s, g.hit[1] * s, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
+function drawSelection(it, s) {
+  const x = it.x * s, y = it.y * s, w = it.width * s, h = it.height * s;
+
+  ctx.save();
+  ctx.strokeStyle = '#4f46e5';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(x, y, w, h);
+
+  // Fixed top-left anchor
+  ctx.fillStyle = '#10b981';
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(x, y, 4.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Handles
+  const handles = [
+    { hx: x + w,     hy: y + h / 2, big: false },
+    { hx: x + w / 2, hy: y + h,     big: false },
+    { hx: x + w,     hy: y + h,     big: true  }
+  ];
+  handles.forEach(hd => {
+    const size = hd.big ? 11 : 8;
+    ctx.fillStyle = hd.big ? '#4f46e5' : '#ffffff';
+    ctx.strokeStyle = '#4f46e5';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    if (ctx.roundRect) {
+      ctx.roundRect(hd.hx - size / 2, hd.hy - size / 2, size, size, 2);
+    } else {
+      ctx.rect(hd.hx - size / 2, hd.hy - size / 2, size, size);
+    }
+    ctx.fill();
+    ctx.stroke();
+  });
+
+  ctx.restore();
+}
+
+/* 6. SNAP ENGINE (center, edges, true 45 deg diagonals, objects, grid) */
+function buildTargets(active) {
+  const W = state.exportWidth;
+  const H = state.exportHeight;
+  const xs = [
+    { v: 0,     t: 'edge' },
+    { v: W / 2, t: 'center' },
+    { v: W,     t: 'edge' }
+  ];
+  const ys = [
+    { v: 0,     t: 'edge' },
+    { v: H / 2, t: 'center' },
+    { v: H,     t: 'edge' }
+  ];
+
+  if (state.gridEnabled) {
+    for (let i = 1; i < state.gridDivisions; i++) {
+      xs.push({ v: (W / state.gridDivisions) * i, t: 'grid' });
+      ys.push({ v: (H / state.gridDivisions) * i, t: 'grid' });
+    }
+  }
+
+  for (const o of state.items) {
+    if (o.id === active.id) continue;
+    xs.push(
+      { v: o.x,                t: 'object', ref: o },
+      { v: o.x + o.width / 2,  t: 'object', ref: o },
+      { v: o.x + o.width,      t: 'object', ref: o }
+    );
+    ys.push(
+      { v: o.y,                t: 'object', ref: o },
+      { v: o.y + o.height / 2, t: 'object', ref: o },
+      { v: o.y + o.height,     t: 'object', ref: o }
+    );
+  }
+  return { xs, ys };
+}
+
+function bestMatch(item, targets, offsets, axis, thr) {
+  let best = null;
+  for (const t of targets) {
+    for (const off of offsets) {
+      const d = Math.abs(item[axis] + off - t.v);
+      if (d <= thr && (!best || d < best.d)) best = { d, t, off };
+    }
+  }
+  return best;
+}
+
+function pushVGuide(t, coord, active) {
+  let y1 = 0, y2 = state.exportHeight;
+  if (t.t === 'object' && t.ref) {
+    y1 = Math.min(active.y, t.ref.y);
+    y2 = Math.max(active.y + active.height, t.ref.y + t.ref.height);
+  }
+  state.activeGuides.push({ kind: 'v', x: coord, y1, y2, type: t.t });
+}
+
+function pushHGuide(t, coord, active) {
+  let x1 = 0, x2 = state.exportWidth;
+  if (t.t === 'object' && t.ref) {
+    x1 = Math.min(active.x, t.ref.x);
+    x2 = Math.max(active.x + active.width, t.ref.x + t.ref.width);
+  }
+  state.activeGuides.push({ kind: 'h', y: coord, x1, x2, type: t.t });
+}
+
+function snapDiagonals(item, thr, lockedX, lockedY) {
+  if (lockedX && lockedY) return false;
+  const W = state.exportWidth;
+  const H = state.exportHeight;
+  const cx = item.x + item.width / 2;
+  const cy = item.y + item.height / 2;
+  const span = Math.max(W, H);
+
+  // True 45-degree diagonals through canvas center (slope +1 and -1)
+  const lines = [
+    {
+      m: 1,
+      f: x => x - W / 2 + H / 2,
+      g: y => y - H / 2 + W / 2,
+      x1: W / 2 - span, y1: H / 2 - span,
+      x2: W / 2 + span, y2: H / 2 + span
+    },
+    {
+      m: -1,
+      f: x => -x + W / 2 + H / 2,
+      g: y => -y + H / 2 + W / 2,
+      x1: W / 2 - span, y1: H / 2 + span,
+      x2: W / 2 + span, y2: H / 2 - span
+    }
+  ];
+
+  for (const L of lines) {
+    const perpFactor = 1 / Math.hypot(1, L.m);
+    const dist = Math.abs(cy - L.f(cx)) * perpFactor;
+    if (dist <= thr) {
+      if (!lockedY)      item.y = L.f(cx) - item.height / 2;
+      else if (!lockedX) item.x = L.g(cy) - item.width / 2;
+
+      state.activeGuides.push({
+        kind: 'd',
+        x1: L.x1, y1: L.y1, x2: L.x2, y2: L.y2,
+        hit: [item.x + item.width / 2, item.y + item.height / 2],
+        type: 'diagonal'
+      });
+      return true;
+    }
+  }
+  return false;
+}
+
+function computeSnap(item, mode) {
+  state.activeGuides = [];
+  const thr = 8 * dispToExport();
+  const { xs, ys } = buildTargets(item);
+
+  if (mode === 'drag') {
+    const offX = [0, item.width / 2, item.width];
+    const offY = [0, item.height / 2, item.height];
+
+    const mx = bestMatch(item, xs, offX, 'x', thr);
+    const my = bestMatch(item, ys, offY, 'y', thr);
+
+    if (mx) {
+      item.x = mx.t.v - mx.off;
+      pushVGuide(mx.t, mx.t.v, item);
+    }
+    if (my) {
+      item.y = my.t.v - my.off;
+      pushHGuide(my.t, my.t.v, item);
+    }
+
+    snapDiagonals(item, thr, !!mx, !!my);
+
+  } else {
+    const aspect = item.naturalWidth / item.naturalHeight;
+    const minW = aspect >= 1 ? MIN_SIZE * aspect : MIN_SIZE;
+    const minH = aspect >= 1 ? MIN_SIZE : MIN_SIZE / aspect;
+
+    const allowX = mode === 'scale-br' || mode === 'scale-r';
+    const allowY = mode === 'scale-br' || mode === 'scale-b';
+
+    let bx = null, by = null;
+
+    if (allowX) {
+      const right = item.x + item.width;
+      for (const t of xs) {
+        if (t.v < item.x + minW) continue;
+        const d = Math.abs(right - t.v);
+        if (d <= thr && (!bx || d < bx.d)) bx = { d, t };
+      }
+    }
+    if (allowY) {
+      const bottom = item.y + item.height;
+      for (const t of ys) {
+        if (t.v < item.y + minH) continue;
+        const d = Math.abs(bottom - t.v);
+        if (d <= thr && (!by || d < by.d)) by = { d, t };
+      }
+    }
+
+    if (bx && (!by || bx.d <= by.d)) {
+      item.width  = bx.t.v - item.x;
+      item.height = item.width / aspect;
+      pushVGuide(bx.t, bx.t.v, item);
+    } else if (by) {
+      item.height = by.t.v - item.y;
+      item.width  = item.height * aspect;
+      pushHGuide(by.t, by.t.v, item);
+    }
+  }
+}
+
+/* 7. POINTER INTERACTION */
+const getSelected = () => state.items.find(i => i.id === state.selectedId) || null;
+
+function hitHandle(item, dx, dy, touch) {
+  if (!item) return null;
+  const s = expToDisp();
+  const x = item.x * s, y = item.y * s, w = item.width * s, h = item.height * s;
+  const r = touch ? 20 : 12;
+
+  if (Math.hypot(dx - (x + w), dy - (y + h)) <= r) return 'scale-br';
+  if (Math.hypot(dx - (x + w), dy - (y + h / 2)) <= r) return 'scale-r';
+  if (Math.hypot(dx - (x + w / 2), dy - (y + h)) <= r) return 'scale-b';
+  return null;
+}
+
+function hitItem(ex, ey) {
+  for (let i = state.items.length - 1; i >= 0; i--) {
+    const it = state.items[i];
+    if (ex >= it.x && ex <= it.x + it.width && ey >= it.y && ey <= it.y + it.height) return it;
+  }
+  return null;
+}
+
+function onDown(e) {
+  if (e.pointerType === 'mouse' && e.button !== 0) return;
+  const c = getCoords(e);
+  const sel = getSelected();
+
+  const handle = hitHandle(sel, c.dx, c.dy, e.pointerType === 'touch');
+  if (handle) {
+    state.mode = handle;
+    state.startPointer = c;
+    state.startRect = { x: sel.x, y: sel.y, width: sel.width, height: sel.height };
+    e.preventDefault();
+    return;
+  }
+
+  const hit = hitItem(c.x, c.y);
+  if (hit) {
+    state.selectedId = hit.id;
+    state.mode = 'drag';
+    state.startPointer = c;
+    state.startRect = { x: hit.x, y: hit.y, width: hit.width, height: hit.height };
+    updateSelectionBar();
+    render();
+    e.preventDefault();
+  } else {
+    state.selectedId = null;
+    state.mode = null;
+    state.activeGuides = [];
+    updateSelectionBar();
+    render();
+  }
+}
+
+function onMove(e) {
+  const c = getCoords(e);
+  const sel = getSelected();
+
+  if (!state.mode) {
+    if (e.pointerType === 'mouse') {
+      const h = hitHandle(sel, c.dx, c.dy, false);
+      canvas.style.cursor = h === 'scale-br' ? 'nwse-resize'
+        : h === 'scale-r' ? 'ew-resize'
+        : h === 'scale-b' ? 'ns-resize'
+        : hitItem(c.x, c.y) ? 'move' : 'default';
+    }
+    return;
+  }
+
+  if (!sel || !state.startRect) return;
+  e.preventDefault();
+
+  const dx = c.x - state.startPointer.x;
+  const dy = c.y - state.startPointer.y;
+  const aspect = sel.naturalWidth / sel.naturalHeight;
+  const minW = aspect >= 1 ? MIN_SIZE * aspect : MIN_SIZE;
+  const minH = aspect >= 1 ? MIN_SIZE : MIN_SIZE / aspect;
+  const st = state.startRect;
+
+  if (state.mode === 'drag') {
+    sel.x = st.x + dx;
+    sel.y = st.y + dy;
+    computeSnap(sel, 'drag');
+
+  } else if (state.mode === 'scale-br') {
+    // Smooth diagonal projection without discontinuous axis-switching jumps
+    const diagLenSq = st.width * st.width + st.height * st.height;
+    const scale = Math.max(0.05, ((st.width + dx) * st.width + (st.height + dy) * st.height) / diagLenSq);
+    sel.width  = Math.max(minW, st.width * scale);
+    sel.height = sel.width / aspect;
+    computeSnap(sel, 'scale-br');
+
+  } else if (state.mode === 'scale-r') {
+    sel.width  = Math.max(minW, st.width + dx);
+    sel.height = sel.width / aspect;
+    computeSnap(sel, 'scale-r');
+
+  } else if (state.mode === 'scale-b') {
+    sel.height = Math.max(minH, st.height + dy);
+    sel.width  = sel.height * aspect;
+    computeSnap(sel, 'scale-b');
+  }
+
+  updateSelectionBar();
+  render();
+}
+
+function onUp() {
+  if (!state.mode) return;
+  state.mode = null;
+  state.activeGuides = [];
+  state.startRect = null;
+  updateSelectionBar();
+  render();
+}
+
+canvas.addEventListener('pointerdown', onDown);
+window.addEventListener('pointermove', onMove, { passive: false });
+window.addEventListener('pointerup', onUp);
+window.addEventListener('pointercancel', onUp);
+
+/* 8. SELECTION BAR */
+function updateSelectionBar() {
+  const sel = getSelected();
+  if (!sel) {
+    selectionBar.classList.add('hidden');
+    return;
+  }
+  selectionBar.classList.remove('hidden');
+  selDims.textContent = `${Math.round(sel.width)} × ${Math.round(sel.height)} px`;
+}
+
+document.getElementById('btnForward').addEventListener('click', () => {
+  const i = state.items.findIndex(it => it.id === state.selectedId);
+  if (i >= 0 && i < state.items.length - 1) {
+    [state.items[i], state.items[i + 1]] = [state.items[i + 1], state.items[i]];
+    render();
+  }
+});
+
+document.getElementById('btnBackward').addEventListener('click', () => {
+  const i = state.items.findIndex(it => it.id === state.selectedId);
+  if (i > 0) {
+    [state.items[i], state.items[i - 1]] = [state.items[i - 1], state.items[i]];
+    render();
+  }
+});
+
+document.getElementById('btnDelete').addEventListener('click', () => {
+  if (state.selectedId) removeItem(state.selectedId);
+});
+
+function removeItem(id) {
+  const target = state.items.find(it => it.id === id);
+  if (target?.objectUrl) URL.revokeObjectURL(target.objectUrl);
+
+  state.items = state.items.filter(it => it.id !== id);
+  if (state.selectedId === id) {
+    state.selectedId = state.items.length ? state.items[state.items.length - 1].id : null;
+  }
+  updateSelectionBar();
+  render();
+}
+
+/* Keyboard shortcuts (desktop) */
+window.addEventListener('keydown', e => {
+  const tag = document.activeElement?.tagName;
+  if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+  const sel = getSelected();
+  if (!sel) return;
+
+  if (e.key === 'Delete' || e.key === 'Backspace') {
+    e.preventDefault();
+    removeItem(sel.id);
+  } else if (e.key.startsWith('Arrow')) {
+    e.preventDefault();
+    const step = e.shiftKey ? 10 : 1;
+    if (e.key === 'ArrowLeft')  sel.x -= step;
+    if (e.key === 'ArrowRight') sel.x += step;
+    if (e.key === 'ArrowUp')    sel.y -= step;
+    if (e.key === 'ArrowDown')  sel.y += step;
+    updateSelectionBar();
+    render();
+  }
+});
+
+/* 9. IMPORT */
+function addItem(img, name, indexOffset = 0, objectUrl = null) {
+  const natW = img.naturalWidth || img.width || 600;
+  const natH = img.naturalHeight || img.height || 400;
+  const aspect = natW / natH;
+
+  let w = state.exportWidth * 0.36;
+  let h = w / aspect;
+  if (h > state.exportHeight * 0.45) {
+    h = state.exportHeight * 0.45;
+    w = h * aspect;
+  }
+
+  const step = Math.round(state.exportWidth * 0.035) * indexOffset;
+  const x = Math.max(10, Math.min(state.exportWidth  - w - 10, (state.exportWidth  - w) / 2 + step));
+  const y = Math.max(10, Math.min(state.exportHeight - h - 10, (state.exportHeight - h) / 2 + step));
+
+  const item = {
+    id: 'img_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+    name: name || 'Image',
+    img,
+    objectUrl,
+    x, y,
+    width: w, height: h,
+    naturalWidth: natW,
+    naturalHeight: natH,
+    isSample: false
+  };
+
+  state.items.push(item);
+  state.selectedId = item.id;
+  updateSelectionBar();
+  render();
+}
+
+function handleFiles(files) {
+  const imgs = Array.from(files).filter(f => f.type.startsWith('image/'));
+  if (!imgs.length) { toast('Please choose image files'); return; }
+
+  let done = 0;
+  imgs.forEach((file, i) => {
+    const objectUrl = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      addItem(img, file.name, i, objectUrl);
+      if (++done === imgs.length) {
+        toast(`Added ${imgs.length} image${imgs.length > 1 ? 's' : ''}`);
+      }
+    };
+    img.onerror = () => URL.revokeObjectURL(objectUrl);
+    img.src = objectUrl;
+  });
+}
+
+importBtn.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', e => {
+  if (e.target.files?.length) {
+    handleFiles(e.target.files);
+    fileInput.value = '';
+  }
+});
+
+/* Drag & drop */
+window.addEventListener('dragover', e => {
+  e.preventDefault();
+  dropOverlay.classList.remove('opacity-0');
+});
+window.addEventListener('dragleave', e => {
+  if (e.relatedTarget === null) dropOverlay.classList.add('opacity-0');
+});
+window.addEventListener('drop', e => {
+  e.preventDefault();
+  dropOverlay.classList.add('opacity-0');
+  if (e.dataTransfer?.files?.length) handleFiles(e.dataTransfer.files);
+});
+
+/* 10. SAMPLE PACK — generated on demand only */
+function makeCard(title, subtitle, c1, c2, accent) {
+  return new Promise(resolve => {
+    const c = document.createElement('canvas');
+    c.width = 900; c.height = 675;
+    const g = c.getContext('2d');
+
+    const grad = g.createLinearGradient(0, 0, c.width, c.height);
+    grad.addColorStop(0, c1);
+    grad.addColorStop(1, c2);
+    g.fillStyle = grad;
+    g.fillRect(0, 0, c.width, c.height);
+
+    g.strokeStyle = 'rgba(255,255,255,0.16)';
+    g.lineWidth = 3;
+    g.beginPath();
+    g.arc(c.width * 0.8, c.height * 0.26, 190, 0, Math.PI * 2);
+    g.stroke();
+
+    g.fillStyle = accent;
+    g.beginPath();
+    g.arc(c.width * 0.8, c.height * 0.26, 64, 0, Math.PI * 2);
+    g.fill();
+
+    g.strokeStyle = 'rgba(255,255,255,0.28)';
+    g.lineWidth = 4;
+    g.strokeRect(32, 32, c.width - 64, c.height - 64);
+
+    g.fillStyle = '#ffffff';
+    g.font = '700 54px Inter, sans-serif';
+    g.fillText(title, 72, c.height - 140);
+
+    g.fillStyle = 'rgba(255,255,255,0.85)';
+    g.font = '500 26px "JetBrains Mono", monospace';
+    g.fillText(subtitle, 72, c.height - 92);
+
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.src = c.toDataURL('image/png');
+  });
+}
+
+async function loadSamplePack() {
+  if (state.sampleBusy) return;
+
+  // Never overwrite the user's own imported images
+  const hasUserImages = state.items.some(it => !it.isSample);
+  if (hasUserImages) {
+    toast('Clear your images first to load samples');
+    return;
+  }
+
+  state.sampleBusy = true;
+  sampleBtn.disabled = true;
+  const icon = sampleBtn.querySelector('svg');
+  if (icon) icon.classList.add('spinning');
+
+  try {
+    const cards = [
+      { t: 'BOTANICAL 01',  s: 'PRINT EDITION • 300 DPI', a: '#0f766e', b: '#115e59', ac: '#fbbf24' },
+      { t: 'MINIMALIST 02', s: 'STUDIO ARCHIVE • A4',     a: '#312e81', b: '#4338ca', ac: '#f43f5e' },
+      { t: 'GEOMETRIC 03',  s: 'GALLERY SERIES • 2026',   a: '#9d174d', b: '#be185d', ac: '#38bdf8' }
+    ];
+
+    const imgs = await Promise.all(cards.map(c => makeCard(c.t, c.s, c.a, c.b, c.ac)));
+
+    // Replace any previous sample set, keep the canvas tidy
+    state.items = state.items.filter(it => !it.isSample);
+    state.selectedId = null;
+
+    const W = state.exportWidth, H = state.exportHeight;
+    const cw = Math.round(W * 0.36);
+    const ch = Math.round(cw * 0.75);
+
+    const pos = [
+      { x: Math.round(W * 0.10), y: Math.round(H * 0.10) },
+      { x: Math.round(W * 0.54), y: Math.round(H * 0.10) },
+      { x: Math.round((W - cw) / 2), y: Math.round(H * 0.52) }
+    ];
+
+    for (let i = 0; i < cards.length; i++) {
+      state.items.push({
+        id: 'sample_' + Date.now() + '_' + i,
+        name: cards[i].t + '.png',
+        img: imgs[i],
+        x: pos[i].x, y: pos[i].y,
+        width: cw, height: ch,
+        naturalWidth: imgs[i].naturalWidth,
+        naturalHeight: imgs[i].naturalHeight,
+        isSample: true
+      });
+    }
+
+    state.selectedId = state.items[state.items.length - 1].id;
+    updateSelectionBar();
+    render();
+    toast('Sample pack added');
+  } catch (err) {
+    console.error(err);
+    toast('Could not load samples');
+  } finally {
+    state.sampleBusy = false;
+    sampleBtn.disabled = false;
+    if (icon) icon.classList.remove('spinning');
+  }
+}
+
+sampleBtn.addEventListener('click', loadSamplePack);
+
+/* 11. TOOLBAR EVENTS */
+sizeSelect.addEventListener('change', () => {
+  state.presetKey = sizeSelect.value;
+  updateCanvasDimensions(true);
+  toast(PRESETS[state.presetKey].name);
+});
+
+dpiSelect.addEventListener('change', () => {
+  state.dpi = Number(dpiSelect.value);
+  updateCanvasDimensions(true);
+  const label = dpiSelect.options[dpiSelect.selectedIndex].text;
+  toast(`Resolution: ${label}`);
+});
+
+function syncGridUI() {
+  if (state.gridEnabled) {
+    gridGroup.className = 'flex items-center rounded-lg border border-indigo-500 bg-indigo-50/70 p-0.5 shrink-0';
+    gridBtn.className = 'h-8 w-8 rounded-md bg-indigo-600 text-white grid place-items-center transition';
+  } else {
+    gridGroup.className = 'flex items-center rounded-lg border border-slate-200 bg-white p-0.5 shrink-0';
+    gridBtn.className = 'h-8 w-8 rounded-md text-slate-600 hover:bg-slate-100 grid place-items-center transition';
+  }
+}
+
+gridBtn.addEventListener('click', () => {
+  state.gridEnabled = !state.gridEnabled;
+  syncGridUI();
+  render();
+});
+
+gridSelect.addEventListener('change', () => {
+  state.gridDivisions = Number(gridSelect.value);
+  state.gridEnabled = true;
+  syncGridUI();
+  render();
+  toast(`${state.gridDivisions}×${state.gridDivisions} Grid enabled`);
+});
+
+/* Export menu */
+exportBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  exportMenu.classList.toggle('hidden');
+});
+window.addEventListener('click', e => {
+  if (!exportWrap.contains(e.target)) exportMenu.classList.add('hidden');
+});
+
+/* 12. EXPORT ENGINE */
+function buildExportCanvas() {
+  const c = document.createElement('canvas');
+  c.width = state.exportWidth;
+  c.height = state.exportHeight;
+  const g = c.getContext('2d');
+
+  g.fillStyle = '#ffffff';
+  g.fillRect(0, 0, c.width, c.height);
+
+  g.imageSmoothingEnabled = true;
+  g.imageSmoothingQuality = 'high';
+  for (const it of state.items) {
+    g.drawImage(it.img, it.x, it.y, it.width, it.height);
+  }
+  return c;
+}
+
+function fileName(ext) {
+  return `PrintStudio_${state.presetKey.replace(':', 'x')}_${state.dpi}DPI.${ext}`;
+}
+
+function download(blob, name) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+document.getElementById('exportPng').addEventListener('click', () => {
+  exportMenu.classList.add('hidden');
+  buildExportCanvas().toBlob(b => {
+    if (b) { download(b, fileName('png')); toast('PNG exported'); }
+  }, 'image/png');
+});
+
+document.getElementById('exportJpg').addEventListener('click', () => {
+  exportMenu.classList.add('hidden');
+  buildExportCanvas().toBlob(b => {
+    if (b) { download(b, fileName('jpg')); toast('JPEG exported'); }
+  }, 'image/jpeg', 0.96);
+});
+
+document.getElementById('exportPdf').addEventListener('click', () => {
+  exportMenu.classList.add('hidden');
+  try {
+    const data = buildExportCanvas().toDataURL('image/jpeg', 0.98);
+    const p = PRESETS[state.presetKey].pdf;
+
+    if (!window.jspdf?.jsPDF) { toast('PDF engine not ready'); return; }
+
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({
+      orientation: p.orientation,
+      unit: p.unit,
+      format: p.format,
+      compress: true
+    });
+
+    pdf.addImage(data, 'JPEG', 0, 0,
+      pdf.internal.pageSize.getWidth(),
+      pdf.internal.pageSize.getHeight(), undefined, 'FAST');
+    pdf.save(fileName('pdf'));
+    toast('PDF exported');
+  } catch (err) {
+    console.error(err);
+    toast('PDF failed — try PNG');
+  }
+});
+
+/* 13. TOAST + INIT */
+let toastTimer = null;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  el.classList.remove('opacity-0', '-translate-y-3');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.add('opacity-0', '-translate-y-3'), 2200);
+}
+
+new ResizeObserver(() => {
+  fitCanvas();
+  render();
+}).observe(viewport);
+
+window.addEventListener('load', () => {
+  updateCanvasDimensions(false);
+  // Canvas starts empty — samples are generated on demand via the Sample button
+});
+</script>
+</body>
+</html>
