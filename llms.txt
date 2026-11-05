@@ -1,0 +1,17 @@
+# Dr. A4
+> Dr. A4 is a suite of web tools for printers, including multi-column Markdown PDF cheat sheet generators and high-DPI image print layout studios.
+
+Built and maintained by rachit9876. Pure client-side static tools designed for physical printing, exam revision guides, and layout formatting.
+
+## Core Tools
+- [Dr. A4 Hub](https://rachit9876.github.io/A4-cheat-sheet/): Main portal and launcher for Dr. A4 printer tools.
+- [Notes](https://rachit9876.github.io/A4-cheat-sheet/notes.html): High-density A4 Markdown PDF generator with 1-in-1, 2-in-1, and 3-in-1 column layouts, LaTeX math, diagrams, and binary-search pagination.
+- [Images (PrintStudio)](https://rachit9876.github.io/A4-cheat-sheet/images.html): Interactive high-DPI A4 canvas for multi-image print layout, grid snapping (2x2, 4x4), and PDF/PNG/JPEG export.
+- [Legacy](https://rachit9876.github.io/A4-cheat-sheet/legacy/index.html): Classic 2-in-1 A4 Markdown PDF cheat sheet workspace with sample study guide.
+
+## Documentation & Repository
+- [Project Readme](https://rachit9876.github.io/A4-cheat-sheet/README.md): Architecture, feature summary, and local development instructions.
+- [GitHub Repository](https://github.com/rachit9876/A4-cheat-sheet): Source code and issue tracking.
+
+## Optional
+- [Sample Markdown Guide](https://rachit9876.github.io/A4-cheat-sheet/legacy/sample.md): Markdown formatting reference demonstrating tables, KaTeX math, code blocks, and callout alerts.

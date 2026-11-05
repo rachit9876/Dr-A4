@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "specVersion": "1.0",
+  "host": {
+    "displayName": "Dr. A4 — Tools for Printers",
+    "documentationUrl": "https://github.com/rachit9876/A4-cheat-sheet"
+  },
+  "entries": [
+    {
+      "identifier": "io.github.rachit9876.dr-a4/notes",
+      "displayName": "Dr. A4 Notes — A4 Markdown PDF Generator",
+      "type": "web-application",
+      "url": "https://rachit9876.github.io/A4-cheat-sheet/notes.html",
+      "description": "Multi-column 1-in-1, 2-in-1, and 3-in-1 A4 Markdown PDF cheat sheet printer with LaTeX math, Mermaid diagrams, and automatic binary-search node pagination.",
+      "representativeQueries": [
+        "Generate 2-in-1 A4 cheat sheet from Markdown",
+        "Print Markdown notes to A4 PDF with LaTeX math",
+        "A4 dense notes printer with zero overflow"
+      ]
+    },
+    {
+      "identifier": "io.github.rachit9876.dr-a4/images",
+      "displayName": "Dr. A4 Images — PrintStudio",
+      "type": "web-application",
+      "url": "https://rachit9876.github.io/A4-cheat-sheet/images.html",
+      "description": "High-DPI A4 print layout studio for arranging images on custom grids, aspect ratios, and exporting to print-ready PDF, PNG, and JPEG.",
+      "representativeQueries": [
+        "Arrange images on A4 sheet for printing",
+        "A4 photo print layout with 2x2 and 4x4 grids",
+        "Export high-DPI image layout to printable PDF"
+      ]
+    },
+    {
+      "identifier": "io.github.rachit9876.dr-a4/legacy",
+      "displayName": "Dr. A4 Legacy Workspace",
+      "type": "web-application",
+      "url": "https://rachit9876.github.io/A4-cheat-sheet/legacy/index.html",
+      "description": "Classic 2-in-1 A4 Markdown PDF workspace and fallback print layout generator.",
+      "representativeQueries": [
+        "Classic 2-in-1 A4 Markdown PDF printer",
+        "Markdown cheat sheet generator legacy tool"
+      ]
+    }
+  ]
+}
