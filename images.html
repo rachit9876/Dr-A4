@@ -55,94 +55,82 @@ tailwind.config = {
 
 <body class="h-screen bg-slate-50 text-slate-900 flex flex-col overflow-hidden" style="height:100dvh">
 
-<!-- SINGLE NAV BAR -->
-<header class="relative z-30 h-14 shrink-0 bg-white border-b border-slate-200 flex items-center gap-1.5 sm:gap-2 px-2 sm:px-4">
+<!-- SMART RESPONSIVE NAV BAR -->
+<header class="relative z-30 h-13 sm:h-14 shrink-0 bg-white border-b border-slate-200 px-2 sm:px-3 flex items-center justify-between gap-1 sm:gap-2">
 
-  <!-- Brand -->
-  <div class="flex items-center gap-2 shrink-0">
-    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 grid place-items-center shadow-sm shadow-indigo-500/30">
-      <i data-lucide="layout-template" class="w-4 h-4 text-white"></i>
-    </div>
-    <span class="hidden sm:block font-semibold text-[13px] tracking-tight text-slate-800">PrintStudio</span>
-  </div>
-
-  <div class="w-px h-6 bg-slate-200 hidden sm:block"></div>
-
-  <!-- Canvas size -->
-  <select id="sizeSelect" title="Canvas size"
-    class="bg-slate-100 hover:bg-slate-200/70 text-[11px] sm:text-xs font-medium text-slate-700 rounded-lg pl-2 pr-5 py-1.5 border border-transparent focus:outline-none focus:border-indigo-400 focus:bg-white cursor-pointer max-w-[92px] sm:max-w-none">
-    <option value="a4-portrait" selected>A4 Portrait</option>
-    <option value="a4-landscape">A4 Landscape</option>
-    <option value="3:4">3:4</option>
-    <option value="4:3">4:3</option>
-    <option value="16:9">16:9</option>
-    <option value="9:16">9:16</option>
-    <option value="1:1">1:1</option>
-  </select>
-
-  <!-- DPI (Eco / Low / Medium / High) -->
-  <select id="dpiSelect" title="Resolution"
-    class="bg-slate-100 hover:bg-slate-200/70 text-[11px] sm:text-xs font-medium text-slate-700 rounded-lg pl-2 pr-5 py-1.5 border border-transparent focus:outline-none focus:border-indigo-400 focus:bg-white cursor-pointer max-w-[132px] sm:max-w-none">
-    <option value="72">Eco — 72 DPI</option>
-    <option value="150">Low — 150 DPI</option>
-    <option value="300" selected>Medium — 300 DPI</option>
-    <option value="600">High — 600 DPI</option>
-  </select>
-
-  <span id="dimensionReadout" class="hidden xl:inline font-mono text-[11px] text-slate-400 ml-1"></span>
-
-  <div class="flex-1"></div>
-
-  <!-- Import -->
-  <button id="importBtn"
-    class="h-9 px-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm shadow-indigo-600/25 transition shrink-0">
-    <i data-lucide="image-plus" class="w-4 h-4"></i>
-    <span class="hidden sm:inline">Import</span>
-  </button>
-
-  <!-- Sample pack (on demand) -->
-  <button id="sampleBtn" title="Load sample images"
-    class="h-9 px-2.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 active:bg-slate-100 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition shrink-0 disabled:opacity-60">
-    <i data-lucide="sparkles" class="w-4 h-4 text-violet-500"></i>
-    <span class="hidden sm:inline">Sample</span>
-  </button>
-
-  <!-- Grid toggle + Grid size dropdown (2x2, 4x4) -->
-  <div class="flex items-center rounded-lg border border-slate-200 bg-white p-0.5 shrink-0" id="gridGroup">
-    <button id="gridBtn" title="Toggle grid"
-      class="h-8 w-8 rounded-md text-slate-600 hover:bg-slate-100 grid place-items-center transition">
-      <i data-lucide="grid" class="w-4 h-4"></i>
-    </button>
-    <select id="gridSelect" title="Grid divisions"
-      class="bg-transparent text-[11px] font-medium text-slate-700 pl-1 pr-3 py-1 focus:outline-none cursor-pointer">
-      <option value="2" selected>2×2</option>
-      <option value="4">4×4</option>
+  <!-- Left: Compact Size & DPI Selects -->
+  <div class="flex items-center gap-1 sm:gap-1.5 shrink min-w-0">
+    <!-- Canvas size -->
+    <select id="sizeSelect" title="Canvas size"
+      class="bg-slate-100 hover:bg-slate-200/70 text-[11px] sm:text-xs font-medium text-slate-700 rounded-lg pl-1.5 sm:pl-2 pr-4 sm:pr-5 py-1.5 border border-transparent focus:outline-none focus:border-indigo-400 focus:bg-white cursor-pointer max-w-[82px] sm:max-w-[100px] truncate">
+      <option value="a4-portrait" selected>A4 ↕</option>
+      <option value="a4-landscape">A4 ↔</option>
+      <option value="3:4">3:4</option>
+      <option value="4:3">4:3</option>
+      <option value="16:9">16:9</option>
+      <option value="9:16">9:16</option>
+      <option value="1:1">1:1</option>
     </select>
+
+    <!-- DPI select -->
+    <select id="dpiSelect" title="Resolution DPI"
+      class="bg-slate-100 hover:bg-slate-200/70 text-[11px] sm:text-xs font-medium text-slate-700 rounded-lg pl-1.5 sm:pl-2 pr-4 sm:pr-5 py-1.5 border border-transparent focus:outline-none focus:border-indigo-400 focus:bg-white cursor-pointer max-w-[70px] sm:max-w-[85px] truncate">
+      <option value="72">72 dpi</option>
+      <option value="150">150 dpi</option>
+      <option value="300" selected>300 dpi</option>
+      <option value="600">600 dpi</option>
+    </select>
+
+    <span id="dimensionReadout" class="hidden xl:inline font-mono text-[11px] text-slate-400 ml-1"></span>
   </div>
 
-  <!-- Export -->
-  <div class="relative shrink-0" id="exportWrap">
-    <button id="exportBtn"
-      class="h-9 px-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 active:bg-black text-white text-xs font-semibold flex items-center gap-1.5 transition">
-      <i data-lucide="download" class="w-4 h-4"></i>
-      <span class="hidden sm:inline">Export</span>
+  <!-- Right: Compact Action Buttons with Smart Small Labels -->
+  <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
+    <!-- Add / Import -->
+    <!-- Demo / Sample -->
+    <button id="sampleBtn" title="Load demo sample pack"
+      class="h-8 sm:h-9 px-2 sm:px-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 active:bg-slate-100 text-slate-700 text-xs font-semibold flex items-center gap-1 transition shrink-0 disabled:opacity-60">
+      <i data-lucide="sparkles" class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-violet-500"></i>
+      <span class="hidden sm:inline text-[11px] sm:text-xs">Demo</span>
     </button>
 
-    <div id="exportMenu"
-      class="hidden absolute right-0 top-[calc(100%+8px)] w-60 bg-white border border-slate-200 rounded-xl shadow-xl shadow-slate-900/10 p-2 z-50">
-      <div class="px-2 py-1.5 border-b border-slate-100 mb-1">
-        <p class="text-[11px] font-semibold text-slate-800">Export</p>
-        <p id="exportDims" class="text-[10px] font-mono text-indigo-600 mt-0.5">—</p>
+    <!-- Grid toggle + size -->
+    <div class="flex items-center rounded-lg border border-slate-200 bg-white p-0.5 shrink-0" id="gridGroup">
+      <button id="gridBtn" title="Toggle grid"
+        class="h-7 w-7 sm:h-8 sm:w-8 rounded-md text-slate-600 hover:bg-slate-100 grid place-items-center transition">
+        <i data-lucide="grid" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i>
+      </button>
+      <select id="gridSelect" title="Grid divisions"
+        class="bg-transparent text-[11px] font-medium text-slate-700 pl-0.5 pr-2 py-0.5 focus:outline-none cursor-pointer">
+        <option value="2" selected>2×</option>
+        <option value="4">4×</option>
+      </select>
+    </div>
+
+    <!-- Export / Save -->
+    <div class="relative shrink-0" id="exportWrap">
+      <button id="exportBtn" title="Export / Save file"
+        class="h-8 sm:h-9 px-2 sm:px-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 active:bg-black text-white text-xs font-semibold flex items-center gap-1 transition">
+        <i data-lucide="download" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i>
+        <span class="text-[11px] sm:text-xs">Save</span>
+      </button>
+
+      <div id="exportMenu"
+        class="hidden absolute right-0 top-full mt-2 w-52 sm:w-56 bg-white border border-slate-200 rounded-xl shadow-xl shadow-slate-900/10 p-1.5 z-50">
+        <div class="px-2 py-1 border-b border-slate-100 mb-1">
+          <p class="text-[11px] font-semibold text-slate-800">Export As</p>
+          <p id="exportDims" class="text-[10px] font-mono text-indigo-600 mt-0.5">—</p>
+        </div>
+        <button id="exportPdf" class="w-full text-left px-2 py-1.5 rounded-lg hover:bg-slate-100 active:bg-slate-200 flex items-center gap-2 text-xs font-medium text-slate-700 transition">
+          <i data-lucide="file-text" class="w-3.5 h-3.5 text-indigo-500"></i> PDF Doc
+        </button>
+        <button id="exportPng" class="w-full text-left px-2 py-1.5 rounded-lg hover:bg-slate-100 active:bg-slate-200 flex items-center gap-2 text-xs font-medium text-slate-700 transition">
+          <i data-lucide="image" class="w-3.5 h-3.5 text-sky-500"></i> PNG Image
+        </button>
+        <button id="exportJpg" class="w-full text-left px-2 py-1.5 rounded-lg hover:bg-slate-100 active:bg-slate-200 flex items-center gap-2 text-xs font-medium text-slate-700 transition">
+          <i data-lucide="file-image" class="w-3.5 h-3.5 text-amber-500"></i> JPG Image
+        </button>
       </div>
-      <button id="exportPdf" class="w-full text-left px-2 py-2 rounded-lg hover:bg-slate-100 active:bg-slate-200 flex items-center gap-2 text-xs font-medium text-slate-700 transition">
-        <i data-lucide="file-text" class="w-4 h-4 text-indigo-500"></i> Printable PDF
-      </button>
-      <button id="exportPng" class="w-full text-left px-2 py-2 rounded-lg hover:bg-slate-100 active:bg-slate-200 flex items-center gap-2 text-xs font-medium text-slate-700 transition">
-        <i data-lucide="image" class="w-4 h-4 text-sky-500"></i> Lossless PNG
-      </button>
-      <button id="exportJpg" class="w-full text-left px-2 py-2 rounded-lg hover:bg-slate-100 active:bg-slate-200 flex items-center gap-2 text-xs font-medium text-slate-700 transition">
-        <i data-lucide="file-image" class="w-4 h-4 text-amber-500"></i> High-quality JPEG
-      </button>
     </div>
   </div>
 </header>
@@ -174,6 +162,12 @@ tailwind.config = {
       <i data-lucide="trash-2" class="w-4 h-4"></i>
     </button>
   </div>
+
+  <!-- Floating Action Button (FAB) + to add images -->
+  <button id="fabAddBtn" title="Add images" aria-label="Add images"
+    class="fixed right-4 sm:right-6 bottom-4 sm:bottom-6 z-30 w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white shadow-lg shadow-indigo-600/35 hover:shadow-indigo-600/50 hover:scale-105 active:scale-95 transition-all duration-150 flex items-center justify-center cursor-pointer">
+    <i data-lucide="plus" class="w-6 h-6 sm:w-7 sm:h-7 stroke-[2.5]"></i>
+  </button>
 </main>
 
 <!-- Toast -->
@@ -848,7 +842,9 @@ function handleFiles(files) {
   });
 }
 
-importBtn.addEventListener('click', () => fileInput.click());
+const fabAddBtn = document.getElementById('fabAddBtn');
+if (fabAddBtn) fabAddBtn.addEventListener('click', () => fileInput.click());
+if (typeof importBtn !== 'undefined' && importBtn) importBtn.addEventListener('click', () => fileInput.click());
 fileInput.addEventListener('change', e => {
   if (e.target.files?.length) {
     handleFiles(e.target.files);
