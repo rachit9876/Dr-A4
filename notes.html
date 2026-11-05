@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A4 Markdown PDF</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/highlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --bg: #fafafa;
+            --surface: #ffffff;
+            --border: #e4e4e7;
+            --text: #18181b;
+            --muted: #71717a;
+            --accent: #18181b;
+            --doc-font: 10px;
+            --max-page-h: 700px;
+        }
+        * { box-sizing: border-box; }
+        body, html {
+            margin: 0; padding: 0; height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+            background: var(--bg); color: var(--text);
+            -webkit-font-smoothing: antialiased;
+        }
+        .app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+        /* Minimalist Top Header */
+        .header {
+            height: 48px; padding: 0 16px; background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 12px; font-size: 12px; z-index: 10; flex-shrink: 0;
+        }
+        .brand { font-weight: 600; font-size: 13px; letter-spacing: -0.02em; display: flex; align-items: center; gap: 8px; }
+        .controls { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+        .ctrl { display: flex; align-items: center; gap: 6px; color: var(--muted); font-weight: 500; cursor: pointer; user-select: none; }
+        .ctrl:hover { color: var(--text); }
+        .ctrl input[type="number"], .ctrl select {
+            border: 1px solid var(--border); border-radius: 6px; padding: 3px 6px;
+            font-size: 12px; color: var(--text); background: var(--surface); outline: none;
+        }
+        .ctrl input[type="number"] { width: 52px; }
+        .ctrl input[type="checkbox"] { margin: 0; accent-color: var(--accent); cursor: pointer; }
+
+        .btn-group {
+            display: inline-flex; align-items: center; border: 1px solid var(--border);
+            border-radius: 6px; overflow: hidden; background: var(--surface);
+        }
+        .btn-group button {
+            border: none; background: transparent; padding: 4px 8px;
+            font-size: 11px; cursor: pointer; color: var(--text); font-weight: 500;
+        }
+        .btn-group button:hover { background: #f4f4f5; }
+        .btn-group span {
+            font-size: 11px; min-width: 42px; text-align: center; color: var(--muted);
+            border-left: 1px solid var(--border); border-right: 1px solid var(--border); padding: 3px 4px;
+        }
+
+        .btn-primary {
+            background: var(--accent); color: #fff; border: none; border-radius: 6px;
+            padding: 6px 12px; font-size: 12px; font-weight: 500; cursor: pointer;
+            transition: opacity 0.15s;
+        }
+        .btn-primary:hover { opacity: 0.85; }
+        .mobile-tabs { display: none; }
+
+        /* Workspace Split */
+        .workspace { display: flex; flex: 1; overflow: hidden; position: relative; }
+        .editor {
+            width: 42%; min-width: 280px; border-right: 1px solid var(--border);
+            background: var(--surface); display: flex; flex-direction: column;
+        }
+        #md-input {
+            flex: 1; border: none; padding: 20px; resize: none; outline: none;
+            font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+            font-size: 13px; line-height: 1.6; color: var(--text); background: transparent;
+        }
+        .preview {
+            flex: 1; overflow-y: auto; overflow-x: hidden; padding: 24px;
+            background: #ebebef; display: flex; flex-direction: column; align-items: center;
+        }
+        #zoom-sizer { display: flex; justify-content: center; overflow: hidden; flex-shrink: 0; }
+        #preview-wrap {
+            display: flex; flex-direction: column; align-items: center; gap: 24px;
+            transform-origin: top center;
+        }
+
+        /* Kill all scrollbars inside A4 canvas elements (Screen + Print) */
+        .a4-sheet, .a4-sheet * {
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
+        }
+        .a4-sheet *::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+        }
+
+        /* A4 Physical Sheet */
+        .a4-sheet {
+            width: 297mm; height: 210mm; background: #fff;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08), 0 0 1px rgba(0,0,0,0.15);
+            display: flex; padding: 4mm; gap: 4mm; flex-shrink: 0; overflow: hidden;
+        }
+        .a4-sheet.portrait { width: 210mm; height: 297mm; }
+        .logical-page {
+            flex: 1; min-width: 0; height: 100%; position: relative;
+            overflow: hidden !important; padding: 3mm;
+            border: 1px dashed rgba(0,0,0,0.05);
+        }
+        .page-num {
+            position: absolute; bottom: 1.2mm; left: 0; right: 0;
+            text-align: center; font-size: 8px; color: #999; pointer-events: none;
+        }
+
+        /* Document Typography - Strict Non-Scroll Containment */
+        .page-content {
+            font-size: var(--doc-font); line-height: 1.28; color: #111;
+            overflow: hidden !important; word-wrap: break-word; overflow-wrap: anywhere;
+        }
+        .page-content > *:first-child { margin-top: 0 !important; }
+        .page-content p { margin: 2.5px 0; }
+        .page-content h1, .page-content h2, .page-content h3, .page-content h4 {
+            margin: 5px 0 2px; line-height: 1.15; font-weight: 700; color: #000;
+        }
+        .page-content h1 { font-size: 1.45em; border-bottom: 1px solid #eee; padding-bottom: 2px; }
+        .page-content h2 { font-size: 1.25em; }
+        .page-content h3 { font-size: 1.1em; }
+        .page-content ul, .page-content ol { margin: 2px 0; padding-left: 15px; }
+        .page-content hr { border: none; border-top: 1px solid #ddd; margin: 5px 0; }
+        .page-content code {
+            background: #f3f4f6; padding: 1px 3px; border-radius: 3px;
+            font-family: monospace; font-size: 0.92em; word-break: break-word;
+        }
+        .page-content pre {
+            background: #f8f9fa; padding: 5px; border: 1px solid #e5e7eb; border-radius: 3px;
+            margin: 3px 0; white-space: pre-wrap; word-break: break-all; overflow: hidden !important;
+        }
+        .page-content pre code { background: none; padding: 0; white-space: pre-wrap; word-break: break-all; }
+        .page-content blockquote {
+            margin: 3px 0; padding-left: 8px; border-left: 2.5px solid #a1a1aa; color: #52525b;
+        }
+        .page-content table {
+            border-collapse: collapse; width: 100%; table-layout: fixed;
+            margin: 3px 0; overflow: hidden !important;
+        }
+        .page-content th, .page-content td {
+            border: 1px solid #d4d4d8; padding: 2px 5px; text-align: left;
+            word-wrap: break-word; overflow-wrap: anywhere;
+        }
+        .page-content th { background: #f4f4f5; font-weight: 600; }
+        .page-content mark { background: #fef08a; padding: 0 2px; border-radius: 2px; }
+        .page-content img, .page-content svg {
+            max-width: 100% !important;
+            max-height: calc(var(--max-page-h) - 12px) !important;
+            width: auto; height: auto; object-fit: contain; display: block; margin: 2px auto;
+        }
+        .page-content input[type="checkbox"] { margin: 0 4px 0 0; vertical-align: middle; }
+        .katex-display {
+            margin: 3px 0 !important; overflow: hidden !important;
+            max-width: 100%; white-space: normal;
+        }
+        .katex { font-size: 1em !important; }
+        .mermaid { text-align: center; margin: 4px 0; overflow: hidden !important; }
+        .footnotes { margin-top: 8px; border-top: 1px solid #e4e4e7; padding-top: 4px; font-size: 0.85em; color: #555; }
+
+        /* GitHub Alerts */
+        .md-alert { padding: 4px 8px; margin: 3px 0; border-left: 3px solid #0969da; background: #f6f8fa; border-radius: 0 3px 3px 0; }
+        .md-alert-title { font-weight: 700; font-size: 0.9em; margin-bottom: 1px; text-transform: uppercase; letter-spacing: 0.03em; }
+        .md-alert-note { border-color: #0969da; background: #eff6ff; } .md-alert-note .md-alert-title { color: #0969da; }
+        .md-alert-tip { border-color: #16a34a; background: #f0fdf4; } .md-alert-tip .md-alert-title { color: #16a34a; }
+        .md-alert-important { border-color: #9333ea; background: #faf5ff; } .md-alert-important .md-alert-title { color: #9333ea; }
+        .md-alert-warning { border-color: #d97706; background: #fffbeb; } .md-alert-warning .md-alert-title { color: #d97706; }
+        .md-alert-caution { border-color: #dc2626; background: #fef2f2; } .md-alert-caution .md-alert-title { color: #dc2626; }
+
+        #measurer { position: absolute; top: -9999px; left: -9999px; visibility: hidden; pointer-events: none; }
+
+        @media (max-width: 768px) {
+            .header { height: auto; padding: 8px 12px; flex-wrap: wrap; }
+            .mobile-tabs { display: inline-flex; }
+            .editor, .preview { width: 100%; min-width: 100%; }
+            body.mobile-preview .editor { display: none; }
+            body:not(.mobile-preview) .preview { display: none; }
+        }
+
+        @media print {
+            html, body, .app, .workspace, .preview, #zoom-sizer, #preview-wrap {
+                background: #fff !important; width: 100% !important; height: auto !important;
+                margin: 0 !important; padding: 0 !important; overflow: visible !important;
+                display: block !important; transform: none !important; gap: 0 !important;
+                -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;
+            }
+            .header, .editor, #measurer { display: none !important; }
+            .a4-sheet {
+                box-shadow: none !important; margin: 0 !important; overflow: hidden !important;
+                page-break-after: always !important; break-after: page !important;
+                page-break-inside: avoid !important; break-inside: avoid !important;
+            }
+            .a4-sheet:last-child { page-break-after: auto !important; break-after: auto !important; }
+            .logical-page { border: none !important; overflow: hidden !important; }
+        }
+    </style>
+    <style id="print-page-rule">@media print { @page { size: A4 landscape; margin: 0; } }</style>
+</head>
+<body>
+    <div class="app">
+        <header class="header">
+            <div class="brand">
+                <span>A4 Markdown PDF</span>
+                <div class="btn-group mobile-tabs">
+                    <button id="tab-edit" style="background:#f4f4f5">Edit</button>
+                    <button id="tab-prev">Preview</button>
+                </div>
+            </div>
+            <div class="controls">
+                <label class="ctrl">Size <input type="number" id="font-size" value="10" min="6" max="18" step="0.5">px</label>
+                <label class="ctrl">Layout
+                    <select id="cols">
+                        <option value="1">1-in-1 (Portrait)</option>
+                        <option value="2" selected>2-in-1 (Landscape)</option>
+                        <option value="3">3-in-1 (Landscape)</option>
+                    </select>
+                </label>
+                <label class="ctrl"><input type="checkbox" id="page-nums" checked> Page #</label>
+                <label class="ctrl" title="Keep headings attached to following paragraph"><input type="checkbox" id="neat-layout" checked> No Orphans</label>
+                <div class="btn-group">
+                    <button id="zoom-out" title="Zoom Out">−</button>
+                    <span id="zoom-text">100%</span>
+                    <button id="zoom-in" title="Zoom In">+</button>
+                    <button id="zoom-fit">Fit</button>
+                </div>
+                <button class="btn-primary" id="print-btn">Print / PDF</button>
+            </div>
+        </header>
+
+        <main class="workspace">
+            <section class="editor">
+                <textarea id="md-input" spellcheck="false" placeholder="Write Markdown here..."></textarea>
+            </section>
+            <section class="preview" id="preview-pane">
+                <div id="zoom-sizer">
+                    <div id="preview-wrap"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="measurer"></div>
+
+    <script>
+        const DEFAULT_MD = `# Dense A4 Cheat Sheet & Notes
+Write standard **Markdown**, $\\LaTeX$ math, syntax-highlighted code, and diagrams with automatic multi-column pagination and zero inner scrollbars.
+
+> [!TIP]
+> Adjust **Size** and **Layout** (1, 2, or 3 columns per A4 sheet) in the top bar. Click **Print / PDF** to export cleanly.
+
+## 1. Rich Formatting & Math
+Inline math like $E = mc^2$ or ==highlighted text==, subscript H~2~O, and superscript $x^2$ work out of the box :rocket:.
+
+$$\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}$$
+
+## 2. Code & Syntax Highlighting
+\`\`\`javascript
+function binarySearchSplit(nodes, maxHeight) {
+  let low = 0, high = nodes.length;
+  while (low < high) {
+    const mid = (low + high + 1) >> 1;
+    if (measure(nodes.slice(0, mid)) <= maxHeight) low = mid;
+    else high = mid - 1;
+  }
+  return low;
+}
+\`\`\`
+
+## 3. Auto-Splitting Tables & Lists
+| Feature | Status | Complexity |
+| :--- | :--- | :--- |
+| Binary Search Split | ✅ Active | $O(\\log N)$ |
+| Row-by-Row Table Split | ✅ Active | Auto-Header |
+| Zero Inner Scrollbars | ✅ Active | Print-Safe |
+
+* Clean pagination across logical columns
+* Automatic list continuation across page breaks
+* Zero external local file dependencies`;
+
+        const $ = id => document.getElementById(id);
+        const mdInput = $('md-input');
+        const previewPane = $('preview-pane');
+        const zoomSizer = $('zoom-sizer');
+        const previewWrap = $('preview-wrap');
+        const measurer = $('measurer');
+        const fontSizeEl = $('font-size');
+        const colsEl = $('cols');
+        const pageNumsEl = $('page-nums');
+        const neatLayoutEl = $('neat-layout');
+        const zoomText = $('zoom-text');
+        const printRule = $('print-page-rule');
+
+        let maxPageHeight = 600;
+        let zoom = 1;
+        let renderSeq = 0;
+
+        if (window.mermaid) {
+            mermaid.initialize({ startOnLoad: false, theme: 'neutral', securityLevel: 'loose' });
+        }
+
+        function updateDimensions() {
+            const cols = +colsEl.value || 2;
+            const isPortrait = cols === 1;
+            printRule.textContent = `@media print { @page { size: A4 ${isPortrait ? 'portrait' : 'landscape'}; margin: 0; } }`;
+
+            const dummy = document.createElement('div');
+            dummy.className = `a4-sheet${isPortrait ? ' portrait' : ''}`;
+            dummy.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;';
+            for (let i = 0; i < cols; i++) {
+                dummy.innerHTML += '<div class="logical-page"><div class="page-content" style="height:100%"></div></div>';
+            }
+            document.body.appendChild(dummy);
+            const contentBox = dummy.querySelector('.page-content');
+            maxPageHeight = contentBox.clientHeight - 16;
+            document.documentElement.style.setProperty('--max-page-h', maxPageHeight + 'px');
+            measurer.style.width = contentBox.clientWidth + 'px';
+            document.body.removeChild(dummy);
+        }
+
+        function syncZoomBox() {
+            previewWrap.style.transform = `scale(${zoom})`;
+            zoomText.textContent = Math.round(zoom * 100) + '%';
+            const w = previewWrap.offsetWidth;
+            const h = previewWrap.offsetHeight;
+            zoomSizer.style.width = Math.ceil(w * zoom) + 'px';
+            zoomSizer.style.height = Math.ceil(h * zoom) + 'px';
+        }
+
+        function setZoom(val) {
+            zoom = Math.min(2, Math.max(0.25, val));
+            syncZoomBox();
+        }
+
+        function fitZoom() {
+            if (!previewPane.clientWidth) return;
+            const cols = +colsEl.value || 2;
+            const sheetW = cols === 1 ? 794 : 1123;
+            setZoom(Math.min(1.05, (previewPane.clientWidth - 48) / sheetW));
+        }
+
+        function preprocess(md) {
+            const blocks = [];
+            md = md.replace(/(```[\s\S]*?```|`[^`\n]+`)/g, m => `@@CODE_${blocks.push(m) - 1}@@`);
+
+            if (window.katex) {
+                md = md.replace(/\$\$([\s\S]+?)\$\$/g, (_, math) => {
+                    try { return katex.renderToString(math.trim(), { displayMode: true, throwOnError: false }); }
+                    catch { return _; }
+                });
+                md = md.replace(/(^|[^\\])\$([^\$\n]+?)\$/g, (_, pre, math) => {
+                    try { return pre + katex.renderToString(math.trim(), { displayMode: false, throwOnError: false }); }
+                    catch { return _; }
+                });
+            }
+
+            md = md.replace(/==([^=\n]+)==/g, '<mark>$1</mark>')
+                   .replace(/~([^~\s\n]+?)~/g, '<sub>$1</sub>')
+                   .replace(/\^([^\^\s\n]+?)\^/g, '<sup>$1</sup>');
+
+            const emojis = { ':smile:':'😄', ':rocket:':'🚀', ':heart:':'❤️', ':+1:':'👍', ':tada:':'🎉', ':warning:':'⚠️', ':check:':'✅', ':x:':'❌', ':star:':'⭐', ':fire:':'🔥', ':bulb:':'💡', ':100:':'💯' };
+            for (const [k, v] of Object.entries(emojis)) md = md.replaceAll(k, v);
+
+            const fns = [];
+            md = md.replace(/^\[\^([^\]]+)\]:\s*(.+)$/gm, (_, id, text) => { fns.push({ id, text }); return ''; });
+            md = md.replace(/\[\^([^\]]+)\]/g, (_, id) => `<sup><a href="#fn-${id}" id="fnref-${id}">[${id}]</a></sup>`);
+            if (fns.length) {
+                md += '\n\n<section class="footnotes"><ol>' + fns.map(f => `<li id="fn-${f.id}">${f.text} <a href="#fnref-${f.id}">↩</a></li>`).join('') + '</ol></section>';
+            }
+
+            return md.replace(/@@CODE_(\d+)@@/g, (_, i) => blocks[+i]);
+        }
+
+        async function postprocess(root, seq) {
+            root.querySelectorAll('blockquote').forEach(bq => {
+                const m = bq.innerHTML.match(/^\s*<p>\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*(?:<br>|\n)?/i);
+                if (m) {
+                    const type = m[1].toLowerCase();
+                    const div = document.createElement('div');
+                    div.className = `md-alert md-alert-${type}`;
+                    const body = bq.innerHTML.replace(m[0], '<p>');
+                    div.innerHTML = `<div class="md-alert-title">${m[1]}</div><div>${body}</div>`;
+                    bq.replaceWith(div);
+                }
+            });
+
+            if (window.hljs) {
+                root.querySelectorAll('pre code:not(.language-mermaid)').forEach(b => hljs.highlightElement(b));
+            }
+
+            if (window.mermaid) {
+                const mBlocks = Array.from(root.querySelectorAll('pre code.language-mermaid'));
+                for (let i = 0; i < mBlocks.length; i++) {
+                    if (seq !== renderSeq) return;
+                    const code = mBlocks[i].textContent.trim();
+                    const id = `mmd-${seq}-${i}`;
+                    try {
+                        const { svg } = await mermaid.render(id, code);
+                        const wrap = document.createElement('div');
+                        wrap.className = 'mermaid';
+                        wrap.innerHTML = svg;
+                        mBlocks[i].parentElement.replaceWith(wrap);
+                    } catch {
+                        document.getElementById(id)?.remove();
+                    }
+                }
+            }
+        }
+
+        function appendMerged(container, node) {
+            const clone = node.cloneNode(true);
+            const last = container.lastElementChild;
+            if (last && (clone.tagName === 'UL' || clone.tagName === 'OL') && clone.tagName === last.tagName) {
+                while (clone.firstChild) last.appendChild(clone.firstChild);
+            } else {
+                container.appendChild(clone);
+            }
+        }
+
+        function measureNodes(nodes) {
+            measurer.innerHTML = '<div class="page-content"></div>';
+            const box = measurer.firstElementChild;
+            for (const n of nodes) appendMerged(box, n);
+            return box.clientHeight;
+        }
+
+        // Binary search splitter for paragraphs, code blocks, blockquotes, and tables
+        function binarySplit(node, currentNodes, limit) {
+            if (node.tagName === 'P' || (node.tagName === 'BLOCKQUOTE' && node.children.length <= 1)) {
+                const target = node.tagName === 'BLOCKQUOTE' ? (node.querySelector('p') || node) : node;
+                const tokens = target.innerHTML.split(/(\s+)/);
+                if (tokens.length < 3) return null;
+                const probe = node.cloneNode(true);
+                const probeTarget = node.tagName === 'BLOCKQUOTE' ? (probe.querySelector('p') || probe) : probe;
+                let low = 0, high = tokens.length - 1, best = -1;
+
+                while (low <= high) {
+                    const mid = (low + high) >> 1;
+                    probeTarget.innerHTML = tokens.slice(0, mid + 1).join('');
+                    if (measureNodes([...currentNodes, probe]) <= limit) {
+                        if (probeTarget.innerHTML.trim()) best = mid;
+                        low = mid + 1;
+                    } else {
+                        high = mid - 1;
+                    }
+                }
+                if (best <= 0) return null;
+                const head = node.cloneNode(true), tail = node.cloneNode(true);
+                const headTarget = node.tagName === 'BLOCKQUOTE' ? (head.querySelector('p') || head) : head;
+                const tailTarget = node.tagName === 'BLOCKQUOTE' ? (tail.querySelector('p') || tail) : tail;
+                headTarget.innerHTML = tokens.slice(0, best + 1).join('').trimEnd();
+                tailTarget.innerHTML = tokens.slice(best + 1).join('').trimStart();
+                return tailTarget.innerHTML ? { head, tail } : null;
+            }
+
+            if (node.tagName === 'PRE') {
+                const codeEl = node.querySelector('code') || node;
+                const lines = codeEl.textContent.split('\n');
+                if (lines.length < 2) return null;
+                const probe = node.cloneNode(true);
+                const probeCode = probe.querySelector('code') || probe;
+                let low = 1, high = lines.length - 1, best = 0;
+
+                while (low <= high) {
+                    const mid = (low + high) >> 1;
+                    probeCode.textContent = lines.slice(0, mid).join('\n');
+                    if (measureNodes([...currentNodes, probe]) <= limit) {
+                        best = mid;
+                        low = mid + 1;
+                    } else {
+                        high = mid - 1;
+                    }
+                }
+                if (best === 0) return null;
+                const head = node.cloneNode(true), tail = node.cloneNode(true);
+                (head.querySelector('code') || head).textContent = lines.slice(0, best).join('\n');
+                (tail.querySelector('code') || tail).textContent = lines.slice(best).join('\n');
+                return { head, tail };
+            }
+
+            if (node.tagName === 'TABLE') {
+                const tbody = node.querySelector('tbody');
+                if (!tbody) return null;
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+                if (rows.length < 2) return null;
+                const thead = node.querySelector('thead');
+
+                const buildTable = sliceRows => {
+                    const t = node.cloneNode(false);
+                    if (thead) t.appendChild(thead.cloneNode(true));
+                    const tb = document.createElement('tbody');
+                    sliceRows.forEach(r => tb.appendChild(r.cloneNode(true)));
+                    t.appendChild(tb);
+                    return t;
+                };
+
+                let low = 1, high = rows.length - 1, best = 0;
+                while (low <= high) {
+                    const mid = (low + high) >> 1;
+                    if (measureNodes([...currentNodes, buildTable(rows.slice(0, mid))]) <= limit) {
+                        best = mid;
+                        low = mid + 1;
+                    } else {
+                        high = mid - 1;
+                    }
+                }
+                if (best === 0) return null;
+                return { head: buildTable(rows.slice(0, best)), tail: buildTable(rows.slice(best)) };
+            }
+
+            if (node.tagName === 'BLOCKQUOTE' && node.children.length > 1) {
+                const children = Array.from(node.children);
+                let low = 1, high = children.length - 1, best = 0;
+                const buildBq = slice => {
+                    const b = node.cloneNode(false);
+                    slice.forEach(c => b.appendChild(c.cloneNode(true)));
+                    return b;
+                };
+                while (low <= high) {
+                    const mid = (low + high) >> 1;
+                    if (measureNodes([...currentNodes, buildBq(children.slice(0, mid))]) <= limit) {
+                        best = mid;
+                        low = mid + 1;
+                    } else {
+                        high = mid - 1;
+                    }
+                }
+                if (best === 0) return null;
+                return { head: buildBq(children.slice(0, best)), tail: buildBq(children.slice(best)) };
+            }
+
+            return null;
+        }
+
+        function isHeading(n) {
+            if (!n || n.nodeType !== 1) return false;
+            return /^H[1-6]$/.test(n.tagName) || (n.tagName === 'P' && n.textContent.trim().endsWith(':') && n.textContent.length < 80);
+        }
+
+        async function render() {
+            const seq = ++renderSeq;
+            document.documentElement.style.setProperty('--doc-font', (fontSizeEl.value || 10) + 'px');
+
+            const html = marked.parse(preprocess(mdInput.value));
+            const staging = document.createElement('div');
+            staging.className = 'page-content';
+            staging.innerHTML = html;
+
+            await postprocess(staging, seq);
+            if (seq !== renderSeq) return;
+
+            const queue = [];
+            Array.from(staging.childNodes).forEach(n => {
+                if (n.nodeType === 3 && !n.textContent.trim()) return;
+                if (n.nodeType === 1 && (n.tagName === 'UL' || n.tagName === 'OL')) {
+                    const items = Array.from(n.children).filter(c => c.tagName === 'LI');
+                    const start = +(n.getAttribute('start') || 1);
+                    items.forEach((li, idx) => {
+                        const list = document.createElement(n.tagName);
+                        if (n.tagName === 'OL') list.setAttribute('start', start + idx);
+                        list.appendChild(li.cloneNode(true));
+                        queue.push(list);
+                    });
+                } else if (n.nodeType === 1) {
+                    queue.push(n);
+                }
+            });
+
+            const pages = [];
+            let cur = [];
+            const limit = maxPageHeight - 2;
+            const pushedBackSet = new WeakSet();
+
+            for (let i = 0; i < queue.length; i++) {
+                const node = queue[i];
+                if (measureNodes([...cur, node]) > limit) {
+                    const split = binarySplit(node, cur, limit);
+                    if (split) {
+                        cur.push(split.head);
+                        pages.push(cur);
+                        cur = [];
+                        queue[i] = split.tail;
+                        i--;
+                        continue;
+                    }
+
+                    if (cur.length === 0) {
+                        cur.push(node);
+                        pages.push(cur);
+                        cur = [];
+                        continue;
+                    }
+
+                    const carry = [];
+                    if (neatLayoutEl.checked && !pushedBackSet.has(node)) {
+                        while (cur.length && isHeading(cur[cur.length - 1])) {
+                            carry.unshift(cur.pop());
+                        }
+                        if (cur.length === 0) {
+                            cur.push(...carry);
+                            carry.length = 0;
+                        }
+                    }
+
+                    pages.push(cur);
+                    cur = [...carry];
+                    pushedBackSet.add(node);
+                    i--;
+                } else {
+                    cur.push(node);
+                }
+            }
+            if (cur.length || pages.length === 0) pages.push(cur);
+
+            previewWrap.innerHTML = '';
+            const cols = +colsEl.value || 2;
+            const showNums = pageNumsEl.checked;
+            let pNum = 1;
+
+            for (let i = 0; i < pages.length; i += cols) {
+                const sheet = document.createElement('div');
+                sheet.className = `a4-sheet${cols === 1 ? ' portrait' : ''}`;
+                for (let c = 0; c < cols; c++) {
+                    const page = document.createElement('div');
+                    page.className = 'logical-page';
+                    if (i + c < pages.length) {
+                        const content = document.createElement('div');
+                        content.className = 'page-content';
+                        pages[i + c].forEach(n => appendMerged(content, n));
+                        page.appendChild(content);
+                        if (showNums) {
+                            const num = document.createElement('div');
+                            num.className = 'page-num';
+                            num.textContent = pNum++;
+                            page.appendChild(num);
+                        }
+                    }
+                    sheet.appendChild(page);
+                }
+                previewWrap.appendChild(sheet);
+            }
+            syncZoomBox();
+        }
+
+        let timer;
+        const debounceRender = () => { clearTimeout(timer); timer = setTimeout(render, 180); };
+
+        mdInput.addEventListener('input', debounceRender);
+        fontSizeEl.addEventListener('input', render);
+        pageNumsEl.addEventListener('change', render);
+        neatLayoutEl.addEventListener('change', render);
+        colsEl.addEventListener('change', () => { updateDimensions(); fitZoom(); render(); });
+
+        $('zoom-out').onclick = () => setZoom(zoom - 0.1);
+        $('zoom-in').onclick = () => setZoom(zoom + 0.1);
+        $('zoom-fit').onclick = fitZoom;
+        $('print-btn').onclick = () => window.print();
+
+        $('tab-edit').onclick = () => {
+            document.body.classList.remove('mobile-preview');
+            $('tab-edit').style.background = '#f4f4f5';
+            $('tab-prev').style.background = 'transparent';
+        };
+        $('tab-prev').onclick = () => {
+            document.body.classList.add('mobile-preview');
+            $('tab-prev').style.background = '#f4f4f5';
+            $('tab-edit').style.background = 'transparent';
+            fitZoom();
+        };
+
+        previewPane.addEventListener('wheel', e => {
+            if (e.ctrlKey || e.metaKey) {
+                e.preventDefault();
+                setZoom(zoom + (e.deltaY < 0 ? 0.08 : -0.08));
+            }
+        }, { passive: false });
+
+        window.addEventListener('resize', () => { updateDimensions(); fitZoom(); debounceRender(); });
+
+        mdInput.value = DEFAULT_MD;
+        updateDimensions();
+        fitZoom();
+        render();
+    </script>
+</body>
+</html>
