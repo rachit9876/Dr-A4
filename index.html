@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workspace Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090a0f;
+      --card-bg: rgba(255, 255, 255, 0.03);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-hover-border: rgba(255, 255, 255, 0.22);
+      --card-hover-bg: rgba(255, 255, 255, 0.06);
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --accent: #3b82f6;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: radial-gradient(circle at 50% 20%, #151926 0%, var(--bg) 80%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1.5rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2.75rem;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.5rem;
+    }
+
+    header p {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.25rem;
+      width: 100%;
+      max-width: 860px;
+    }
+
+    .card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 1.75rem;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      text-decoration: none;
+      color: inherit;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      border-color: var(--card-hover-border);
+      background: var(--card-hover-bg);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    .icon-wrapper {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      margin-bottom: 1.25rem;
+      color: #e5e7eb;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    .card:hover .icon-wrapper {
+      background: rgba(255, 255, 255, 0.1);
+      transform: scale(1.05);
+    }
+
+    .card h2 {
+      font-size: 1.15rem;
+      font-weight: 500;
+      margin-bottom: 0.4rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      width: 100%;
+    }
+
+    .card h2 .arrow {
+      margin-left: auto;
+      font-size: 0.9rem;
+      opacity: 0;
+      transform: translateX(-4px);
+      transition: all 0.2s ease;
+      color: var(--text-muted);
+    }
+
+    .card:hover h2 .arrow {
+      opacity: 1;
+      transform: translateX(0);
+      color: var(--text-main);
+    }
+
+    .card p {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
+    @media (max-width: 640px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+      header h1 {
+        font-size: 1.6rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Tools & Hub</h1>
+    <p>Select a workspace tool to launch</p>
+  </header>
+
+  <main class="grid">
+    <!-- Notes Card -->
+    <a href="notes.html" class="card">
+      <div class="icon-wrapper">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <line x1="10" y1="9" x2="8" y2="9"></line>
+        </svg>
+      </div>
+      <h2>Notes <span class="arrow">→</span></h2>
+      <p>Markdown editor and notes manager with sync capabilities.</p>
+    </a>
+
+    <!-- Images Card -->
+    <a href="images.html" class="card">
+      <div class="icon-wrapper">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+          <circle cx="8.5" cy="8.5" r="1.5"></circle>
+          <polyline points="21 15 16 10 5 21"></polyline>
+        </svg>
+      </div>
+      <h2>Images <span class="arrow">→</span></h2>
+      <p>Visual gallery, image assets organizer and manager.</p>
+    </a>
+
+    <!-- Legacy Card -->
+    <a href="legacy/index.html" class="card">
+      <div class="icon-wrapper">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 14 14"></polyline>
+        </svg>
+      </div>
+      <h2>Legacy <span class="arrow">→</span></h2>
+      <p>Classic tool workspace and fallback utility tools.</p>
+    </a>
+  </main>
+
+</body>
+</html>

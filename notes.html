@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <style>
         :root {
@@ -85,7 +85,7 @@
             flex: 1; overflow-y: auto; overflow-x: hidden; padding: 24px;
             background: #ebebef; display: flex; flex-direction: column; align-items: center;
         }
-        #zoom-sizer { display: flex; justify-content: center; overflow: hidden; flex-shrink: 0; }
+        #zoom-sizer { display: flex; justify-content: center; flex-shrink: 0; }
         #preview-wrap {
             display: flex; flex-direction: column; align-items: center; gap: 24px;
             transform-origin: top center;
@@ -330,12 +330,8 @@ function binarySearchSplit(nodes, maxHeight) {
         }
 
         function syncZoomBox() {
-            previewWrap.style.transform = `scale(${zoom})`;
+            previewWrap.style.zoom = zoom;
             zoomText.textContent = Math.round(zoom * 100) + '%';
-            const w = previewWrap.offsetWidth;
-            const h = previewWrap.offsetHeight;
-            zoomSizer.style.width = Math.ceil(w * zoom) + 'px';
-            zoomSizer.style.height = Math.ceil(h * zoom) + 'px';
         }
 
         function setZoom(val) {
