@@ -3,7 +3,98 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Workspace Hub</title>
+  <title>Dr. A4 (Dr A4) — Tools for Printers, A4 Cheat Sheets &amp; Print Layout Studio</title>
+
+  <!-- Primary SEO Meta Tags -->
+  <meta name="title" content="Dr. A4 (Dr A4) — Tools for Printers, A4 Cheat Sheets &amp; Print Layout Studio">
+  <meta name="description" content="Dr. A4 (Dr A4) by rachit9876: Minimalist web tools for printers. Create multi-column A4 Markdown PDF cheat sheets, high-DPI print image layouts, and print-ready documents.">
+  <meta name="keywords" content="Dr. A4, Dr A4, tools for printers, A4 printer tools, A4 cheat sheet generator, A4 markdown PDF, print layout studio, A4 image printer, 2-in-1 A4 print, 3-in-1 A4 print, rachit9876">
+  <meta name="author" content="rachit9876">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+  <meta name="application-name" content="Dr. A4">
+  <meta name="theme-color" content="#090a0f">
+
+  <!-- Favicons -->
+  <link rel="icon" type="image/webp" href="logo.webp">
+  <link rel="shortcut icon" type="image/webp" href="logo.webp">
+  <link rel="apple-touch-icon" href="logo.webp">
+
+  <!-- Open Graph / Social -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Dr. A4">
+  <meta property="og:title" content="Dr. A4 (Dr A4) — Tools for Printers">
+  <meta property="og:description" content="Precision A4 printing utilities: multi-column Markdown PDF cheat sheets, high-DPI image print layout studio, and classic A4 print tools by rachit9876.">
+  <meta property="og:image" content="logo.webp">
+  <meta property="og:image:type" content="image/webp">
+  <meta property="og:image:alt" content="Dr. A4 — Tools for Printers Logo">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Dr. A4 (Dr A4) — Tools for Printers">
+  <meta name="twitter:description" content="Precision A4 printing utilities: multi-column Markdown PDF cheat sheets and high-DPI image print layout studio by rachit9876.">
+  <meta name="twitter:image" content="logo.webp">
+  <meta name="twitter:image:alt" content="Dr. A4 — Tools for Printers Logo">
+
+  <!-- JSON-LD Structured Data for Search Engines -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "name": "Dr. A4",
+        "alternateName": ["Dr A4", "Dr. A4 Printer Tools", "Dr A4 Tools for Printers"],
+        "image": "logo.webp",
+        "description": "Minimalist web tools for printers: multi-column A4 Markdown PDF cheat sheets and high-DPI image print layout studio.",
+        "author": {
+          "@type": "Person",
+          "name": "rachit9876",
+          "url": "https://github.com/rachit9876"
+        }
+      },
+      {
+        "@type": "SoftwareApplication",
+        "name": "Dr. A4",
+        "alternateName": "Dr A4",
+        "image": "logo.webp",
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "Web Browser",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "description": "Suite of tools for printers including A4 Markdown PDF Notes pagination, PrintStudio A4 image canvas, and Legacy 2-in-1 A4 sheet generator.",
+        "creator": {
+          "@type": "Person",
+          "name": "rachit9876",
+          "sameAs": "https://github.com/rachit9876"
+        },
+        "hasPart": [
+          {
+            "@type": "WebApplication",
+            "name": "Dr. A4 Notes — A4 Markdown PDF",
+            "url": "notes.html",
+            "description": "Multi-column 1-in-1, 2-in-1, and 3-in-1 A4 Markdown PDF cheat sheet generator."
+          },
+          {
+            "@type": "WebApplication",
+            "name": "Dr. A4 Images — PrintStudio",
+            "url": "images.html",
+            "description": "High-DPI A4 image print layout studio with PDF, PNG, and JPEG export."
+          },
+          {
+            "@type": "WebApplication",
+            "name": "Dr. A4 Legacy",
+            "url": "legacy/index.html",
+            "description": "Classic 2-in-1 A4 Markdown PDF print workspace."
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -33,20 +124,59 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: space-between;
+      padding: 3rem 1.5rem 2rem;
+    }
+
+    .center-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       justify-content: center;
-      padding: 2rem 1.5rem;
+      flex: 1;
+      width: 100%;
     }
 
     header {
       text-align: center;
       margin-bottom: 2.75rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .brand-logo {
+      width: 68px;
+      height: 68px;
+      object-fit: contain;
+      border-radius: 16px;
+      margin-bottom: 0.9rem;
+      border: 1px solid var(--card-border);
+      background: rgba(255, 255, 255, 0.03);
+      padding: 4px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--card-border);
+      padding: 0.28rem 0.75rem;
+      border-radius: 999px;
+      margin-bottom: 0.75rem;
+      letter-spacing: 0.02em;
     }
 
     header h1 {
-      font-size: 2rem;
+      font-size: 2.25rem;
       font-weight: 600;
       letter-spacing: -0.03em;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.45rem;
     }
 
     header p {
@@ -135,64 +265,101 @@
       line-height: 1.45;
     }
 
+    footer {
+      margin-top: 3rem;
+      text-align: center;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    footer a {
+      color: var(--text-main);
+      text-decoration: none;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.3rem 0.6rem;
+      border-radius: 6px;
+      transition: background 0.15s ease;
+    }
+
+    footer a:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+
     @media (max-width: 640px) {
       .grid {
         grid-template-columns: 1fr;
       }
       header h1 {
-        font-size: 1.6rem;
+        font-size: 1.8rem;
       }
     }
   </style>
 </head>
 <body>
 
-  <header>
-    <h1>Tools & Hub</h1>
-    <p>Select a workspace tool to launch</p>
-  </header>
+  <div class="center-wrap">
+    <header>
+      <img src="logo.webp" alt="Dr. A4 Logo" class="brand-logo" width="68" height="68">
+      <div class="badge">Tools for Printers</div>
+      <h1>Dr. A4</h1>
+      <p>Precision A4 printing, multi-column Markdown PDFs &amp; image layout tools</p>
+    </header>
 
-  <main class="grid">
-    <!-- Notes Card -->
-    <a href="notes.html" class="card">
-      <div class="icon-wrapper">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-          <polyline points="14 2 14 8 20 8"></polyline>
-          <line x1="16" y1="13" x2="8" y2="13"></line>
-          <line x1="16" y1="17" x2="8" y2="17"></line>
-          <line x1="10" y1="9" x2="8" y2="9"></line>
-        </svg>
-      </div>
-      <h2>Notes <span class="arrow">→</span></h2>
-      <p>Markdown editor and notes manager with sync capabilities.</p>
-    </a>
+    <main class="grid" aria-label="Dr. A4 Printer Tools">
+      <!-- Notes Card -->
+      <a href="notes.html" class="card" title="Dr. A4 Notes — Multi-Column A4 Markdown PDF Generator">
+        <div class="icon-wrapper" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <line x1="10" y1="9" x2="8" y2="9"></line>
+          </svg>
+        </div>
+        <h2>Notes <span class="arrow">→</span></h2>
+        <p>1-in-1, 2-in-1 &amp; 3-in-1 A4 Markdown PDF cheat sheet and notes printer.</p>
+      </a>
 
-    <!-- Images Card -->
-    <a href="images.html" class="card">
-      <div class="icon-wrapper">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-          <circle cx="8.5" cy="8.5" r="1.5"></circle>
-          <polyline points="21 15 16 10 5 21"></polyline>
-        </svg>
-      </div>
-      <h2>Images <span class="arrow">→</span></h2>
-      <p>Visual gallery, image assets organizer and manager.</p>
-    </a>
+      <!-- Images Card -->
+      <a href="images.html" class="card" title="Dr. A4 Images — High-DPI A4 Print Layout Studio">
+        <div class="icon-wrapper" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+            <polyline points="21 15 16 10 5 21"></polyline>
+          </svg>
+        </div>
+        <h2>Images <span class="arrow">→</span></h2>
+        <p>PrintStudio high-DPI A4 canvas for arranging and printing images to PDF/PNG.</p>
+      </a>
 
-    <!-- Legacy Card -->
-    <a href="legacy/index.html" class="card">
-      <div class="icon-wrapper">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"></circle>
-          <polyline points="12 6 12 12 14 14"></polyline>
-        </svg>
-      </div>
-      <h2>Legacy <span class="arrow">→</span></h2>
-      <p>Classic tool workspace and fallback utility tools.</p>
+      <!-- Legacy Card -->
+      <a href="legacy/index.html" class="card" title="Dr. A4 Legacy — Classic 2-in-1 A4 Print Tool">
+        <div class="icon-wrapper" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 14 14"></polyline>
+          </svg>
+        </div>
+        <h2>Legacy <span class="arrow">→</span></h2>
+        <p>Classic 2-in-1 A4 Markdown PDF workspace and fallback printer utility.</p>
+      </a>
+    </main>
+  </div>
+
+  <footer>
+    <span>Dr. A4 — Built by</span>
+    <a href="https://github.com/rachit9876" target="_blank" rel="noopener noreferrer" aria-label="rachit9876 on GitHub">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
+      </svg>
+      rachit9876
     </a>
-  </main>
+  </footer>
 
 </body>
 </html>
