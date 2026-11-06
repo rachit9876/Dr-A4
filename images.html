@@ -86,26 +86,12 @@ tailwind.config = {
 
   <!-- Right: Compact Action Buttons with Smart Small Labels -->
   <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
-    <!-- Add / Import -->
-    <!-- Demo / Sample -->
-    <button id="sampleBtn" title="Load demo sample pack"
-      class="h-8 sm:h-9 px-2 sm:px-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 active:bg-slate-100 text-slate-700 text-xs font-semibold flex items-center gap-1 transition shrink-0 disabled:opacity-60">
-      <i data-lucide="sparkles" class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-violet-500"></i>
-      <span class="hidden sm:inline text-[11px] sm:text-xs">Demo</span>
+    <!-- Grid Cycle Toggle Button (Off -> 2x -> 4x -> Off) -->
+    <button id="gridBtn" title="Grid: Off" aria-label="Toggle grid"
+      class="h-8 w-8 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 active:bg-slate-100 flex items-center justify-center transition shrink-0 relative">
+      <i data-lucide="grid" class="w-4 h-4"></i>
+      <span id="gridBadge" class="hidden absolute -bottom-0.5 -right-0.5 text-[9px] font-bold font-mono px-1 py-0 leading-none rounded-full bg-indigo-600 text-white shadow-xs">2</span>
     </button>
-
-    <!-- Grid toggle + size -->
-    <div class="flex items-center rounded-lg border border-slate-200 bg-white p-0.5 shrink-0" id="gridGroup">
-      <button id="gridBtn" title="Toggle grid"
-        class="h-7 w-7 sm:h-8 sm:w-8 rounded-md text-slate-600 hover:bg-slate-100 grid place-items-center transition">
-        <i data-lucide="grid" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i>
-      </button>
-      <select id="gridSelect" title="Grid divisions"
-        class="bg-transparent text-[11px] font-medium text-slate-700 pl-0.5 pr-2 py-0.5 focus:outline-none cursor-pointer">
-        <option value="2" selected>2×</option>
-        <option value="4">4×</option>
-      </select>
-    </div>
 
     <!-- Export / Save -->
     <div class="relative shrink-0" id="exportWrap">
@@ -147,27 +133,36 @@ tailwind.config = {
     <p class="text-sm font-semibold text-indigo-700">Drop images to place</p>
   </div>
 
-  <!-- Contextual selection bar -->
+  <!-- Contextual selection bar (Clean horizontal floating pill on bottom center) -->
   <div id="selectionBar"
-    class="hidden absolute left-1/2 -translate-x-1/2 bottom-3 z-20 flex items-center gap-0.5 bg-white/95 backdrop-blur border border-slate-200 shadow-lg shadow-slate-900/10 rounded-full p-1">
-    <span id="selDims" class="font-mono text-[11px] text-slate-600 px-2 tabular-nums">0 × 0</span>
-    <div class="w-px h-4 bg-slate-200"></div>
-    <button id="btnForward" title="Bring forward" class="w-8 h-8 rounded-full grid place-items-center text-slate-500 hover:bg-slate-100 active:bg-slate-200 transition">
+    class="hidden fixed left-1/2 -translate-x-1/2 bottom-4 sm:bottom-6 z-30 flex items-center gap-1 bg-white/95 backdrop-blur border border-slate-200/90 shadow-xl shadow-slate-900/10 rounded-full px-2 py-1.5 transition-all">
+    <button id="btnForward" title="Bring forward" class="w-8 h-8 rounded-full grid place-items-center text-slate-600 hover:bg-slate-100 active:bg-slate-200 transition">
       <i data-lucide="bring-to-front" class="w-4 h-4"></i>
     </button>
-    <button id="btnBackward" title="Send backward" class="w-8 h-8 rounded-full grid place-items-center text-slate-500 hover:bg-slate-100 active:bg-slate-200 transition">
+    <button id="btnBackward" title="Send backward" class="w-8 h-8 rounded-full grid place-items-center text-slate-600 hover:bg-slate-100 active:bg-slate-200 transition">
       <i data-lucide="send-to-back" class="w-4 h-4"></i>
     </button>
-    <button id="btnDelete" title="Delete" class="w-8 h-8 rounded-full grid place-items-center text-rose-500 hover:bg-rose-50 active:bg-rose-100 transition">
+    <div class="w-px h-4 bg-slate-200 mx-0.5"></div>
+    <button id="btnDelete" title="Delete selected" class="w-8 h-8 rounded-full grid place-items-center text-rose-500 hover:bg-rose-50 active:bg-rose-100 transition">
       <i data-lucide="trash-2" class="w-4 h-4"></i>
     </button>
+    <span id="selDims" class="hidden text-[10px] font-mono text-slate-400 pl-1 pr-1.5 tabular-nums"></span>
   </div>
 
-  <!-- Floating Action Button (FAB) + to add images -->
-  <button id="fabAddBtn" title="Add images" aria-label="Add images"
-    class="fixed right-4 sm:right-6 bottom-4 sm:bottom-6 z-30 w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white shadow-lg shadow-indigo-600/35 hover:shadow-indigo-600/50 hover:scale-105 active:scale-95 transition-all duration-150 flex items-center justify-center cursor-pointer">
-    <i data-lucide="plus" class="w-6 h-6 sm:w-7 sm:h-7 stroke-[2.5]"></i>
-  </button>
+  <!-- Floating Action Buttons (FABs) -->
+  <div class="fixed right-4 sm:right-6 bottom-4 sm:bottom-6 z-30 flex flex-col items-center gap-3">
+    <!-- Sample Pack FAB -->
+    <button id="sampleBtn" title="Load demo sample pack" aria-label="Load demo sample pack"
+      class="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white hover:bg-slate-50 active:bg-slate-100 text-slate-700 border border-slate-200/80 shadow-lg shadow-slate-900/10 hover:shadow-slate-900/15 hover:scale-105 active:scale-95 transition-all duration-150 flex items-center justify-center cursor-pointer disabled:opacity-60">
+      <i data-lucide="sparkles" class="w-5 h-5 sm:w-5 sm:h-5 text-violet-500"></i>
+    </button>
+
+    <!-- Add Images FAB (+) -->
+    <button id="fabAddBtn" title="Add images" aria-label="Add images"
+      class="w-14 h-14 sm:w-14 sm:h-14 rounded-full bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white shadow-xl shadow-indigo-600/40 hover:shadow-indigo-600/50 hover:scale-105 active:scale-95 transition-all duration-150 flex items-center justify-center cursor-pointer">
+      <i data-lucide="plus" class="w-8 h-8 sm:w-7 sm:h-7 stroke-[2.75]"></i>
+    </button>
+  </div>
 </main>
 
 <!-- Toast -->
@@ -230,8 +225,7 @@ const fileInput    = document.getElementById('fileInput');
 const importBtn    = document.getElementById('importBtn');
 const sampleBtn    = document.getElementById('sampleBtn');
 const gridBtn      = document.getElementById('gridBtn');
-const gridSelect   = document.getElementById('gridSelect');
-const gridGroup    = document.getElementById('gridGroup');
+const gridBadge    = document.getElementById('gridBadge');
 const exportBtn    = document.getElementById('exportBtn');
 const exportMenu   = document.getElementById('exportMenu');
 const exportWrap   = document.getElementById('exportWrap');
@@ -990,27 +984,34 @@ dpiSelect.addEventListener('change', () => {
 });
 
 function syncGridUI() {
+  if (!gridBadge) return;
   if (state.gridEnabled) {
-    gridGroup.className = 'flex items-center rounded-lg border border-indigo-500 bg-indigo-50/70 p-0.5 shrink-0';
-    gridBtn.className = 'h-8 w-8 rounded-md bg-indigo-600 text-white grid place-items-center transition';
+    gridBtn.className = 'h-8 w-8 rounded-lg border border-indigo-500 bg-indigo-50 text-indigo-600 hover:bg-indigo-100/70 flex items-center justify-center transition shrink-0 relative';
+    gridBadge.classList.remove('hidden');
+    gridBadge.textContent = state.gridDivisions;
+    gridBtn.title = `Grid: ${state.gridDivisions}×${state.gridDivisions} (click to cycle)`;
   } else {
-    gridGroup.className = 'flex items-center rounded-lg border border-slate-200 bg-white p-0.5 shrink-0';
-    gridBtn.className = 'h-8 w-8 rounded-md text-slate-600 hover:bg-slate-100 grid place-items-center transition';
+    gridBtn.className = 'h-8 w-8 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 active:bg-slate-100 flex items-center justify-center transition shrink-0 relative';
+    gridBadge.classList.add('hidden');
+    gridBtn.title = 'Grid: Off (click to turn on 2×2)';
   }
 }
 
+// Cyclic toggle: Off -> 2x2 -> 4x4 -> Off
 gridBtn.addEventListener('click', () => {
-  state.gridEnabled = !state.gridEnabled;
+  if (!state.gridEnabled) {
+    state.gridEnabled = true;
+    state.gridDivisions = 2;
+    toast('2×2 Grid on');
+  } else if (state.gridDivisions === 2) {
+    state.gridDivisions = 4;
+    toast('4×4 Grid on');
+  } else {
+    state.gridEnabled = false;
+    toast('Grid off');
+  }
   syncGridUI();
   render();
-});
-
-gridSelect.addEventListener('change', () => {
-  state.gridDivisions = Number(gridSelect.value);
-  state.gridEnabled = true;
-  syncGridUI();
-  render();
-  toast(`${state.gridDivisions}×${state.gridDivisions} Grid enabled`);
 });
 
 /* Export menu */
