@@ -233,26 +233,36 @@ const selectionBar = document.getElementById('selectionBar');
 const selDims      = document.getElementById('selDims');
 const dropOverlay  = document.getElementById('dropOverlay');
 
-/* 4. SIZING */
-function updateCanvasDimensions(rescale = true) {
-  const prevW = state.exportWidth;
-  const prevH = state.exportHeight;
+/* 4. SIZING — Physical Print Coordinates (Lossless & Drift-Free) */
+function syncItemPhysical(it) {
+  it.xIn = it.x / state.dpi;
+  it.yIn = it.y / state.dpi;
+  it.wIn = it.width / state.dpi;
+  it.hIn = it.height / state.dpi;
+}
+
+function updateCanvasDimensions(prevDpi = state.dpi) {
   const p = PRESETS[state.presetKey];
+  const oldDpi = prevDpi || state.dpi;
 
   state.exportWidth  = Math.round(p.wIn * state.dpi);
   state.exportHeight = Math.round(p.hIn * state.dpi);
 
-  if (rescale && prevW > 0 && prevH > 0 && state.items.length) {
-    const sx = state.exportWidth / prevW;
-    const sy = state.exportHeight / prevH;
-    const s  = Math.min(sx, sy);
+  if (state.items.length) {
     state.items.forEach(it => {
-      const relCx = (it.x + it.width / 2) / prevW;
-      const relCy = (it.y + it.height / 2) / prevH;
-      it.width  *= s;
-      it.height *= s;
-      it.x = relCx * state.exportWidth - it.width / 2;
-      it.y = relCy * state.exportHeight - it.height / 2;
+      // Initialize physical coordinates in inches if missing
+      if (typeof it.wIn !== 'number' || typeof it.hIn !== 'number') {
+        it.wIn = it.width / oldDpi;
+        it.hIn = it.height / oldDpi;
+        it.xIn = it.x / oldDpi;
+        it.yIn = it.y / oldDpi;
+      }
+
+      // Convert exact physical inches to current pixel DPI
+      it.width  = Math.round(it.wIn * state.dpi);
+      it.height = Math.round(it.hIn * state.dpi);
+      it.x      = Math.round(it.xIn * state.dpi);
+      it.y      = Math.round(it.yIn * state.dpi);
     });
   }
 
@@ -705,6 +715,8 @@ function onMove(e) {
 
 function onUp() {
   if (!state.mode) return;
+  const sel = getSelected();
+  if (sel) syncItemPhysical(sel);
   state.mode = null;
   state.activeGuides = [];
   state.startRect = null;
@@ -811,6 +823,7 @@ function addItem(img, name, indexOffset = 0, objectUrl = null) {
     isSample: false
   };
 
+  syncItemPhysical(item);
   state.items.push(item);
   state.selectedId = item.id;
   updateSelectionBar();
@@ -941,7 +954,7 @@ async function loadSamplePack() {
     ];
 
     for (let i = 0; i < cards.length; i++) {
-      state.items.push({
+      const sItem = {
         id: 'sample_' + Date.now() + '_' + i,
         name: cards[i].t + '.png',
         img: imgs[i],
@@ -950,7 +963,9 @@ async function loadSamplePack() {
         naturalWidth: imgs[i].naturalWidth,
         naturalHeight: imgs[i].naturalHeight,
         isSample: true
-      });
+      };
+      syncItemPhysical(sItem);
+      state.items.push(sItem);
     }
 
     state.selectedId = state.items[state.items.length - 1].id;
@@ -972,13 +987,14 @@ sampleBtn.addEventListener('click', loadSamplePack);
 /* 11. TOOLBAR EVENTS */
 sizeSelect.addEventListener('change', () => {
   state.presetKey = sizeSelect.value;
-  updateCanvasDimensions(true);
+  updateCanvasDimensions(state.dpi);
   toast(PRESETS[state.presetKey].name);
 });
 
 dpiSelect.addEventListener('change', () => {
+  const prevDpi = state.dpi;
   state.dpi = Number(dpiSelect.value);
-  updateCanvasDimensions(true);
+  updateCanvasDimensions(prevDpi);
   const label = dpiSelect.options[dpiSelect.selectedIndex].text;
   toast(`Resolution: ${label}`);
 });
